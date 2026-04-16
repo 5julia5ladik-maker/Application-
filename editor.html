@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HomeStock Editor</title>
+<style>
+:root{
+  --bg:#111111; --panel:#1d1d1d; --panel2:#262626; --text:#f5f5f5; --muted:#a6a6a6;
+  --accent:#f26b1d; --border:rgba(255,255,255,.08); --ok:#1f8f47; --warn:#b85c00;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:Arial,sans-serif;background:linear-gradient(180deg,#0d0d0d,#181818);color:var(--text)}
+.wrap{max-width:980px;margin:0 auto;min-height:100%;padding:18px}
+.top{display:flex;flex-direction:column;gap:10px;margin-bottom:14px}
+.title{font-size:28px;font-weight:800;letter-spacing:-.03em}
+.sub{font-size:13px;color:var(--muted);line-height:1.45}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:20px;padding:14px}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.btn{border:none;border-radius:16px;padding:14px 12px;font-size:14px;font-weight:700;cursor:pointer;text-align:center}
+.btn.primary{background:var(--accent);color:#fff}
+.btn.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--border)}
+.btn.ok{background:var(--ok);color:#fff}
+.btn.warn{background:var(--warn);color:#fff}
+.meta{font-size:12px;color:var(--muted);margin-bottom:12px;line-height:1.45}
+textarea{width:100%;min-height:62vh;background:#0f0f0f;color:#f3f3f3;border:1px solid var(--border);border-radius:18px;padding:16px;font:13px/1.45 Consolas, monospace;resize:vertical}
+.status{margin-top:12px;padding:12px 14px;border-radius:14px;background:var(--panel2);font-size:13px;line-height:1.35}
+.status.ok{border:1px solid rgba(31,143,71,.55)}
+.status.warn{border:1px solid rgba(184,92,0,.55)}
+.hidden{display:none}
+@media (max-width:640px){
+  .wrap{padding:12px}
+  .actions{grid-template-columns:1fr}
+  textarea{min-height:58vh}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div class="title">Editor</div>
+    <div class="sub">Редактируй `index.html` с телефона, полностью заменяй его новым HTML-файлом или восстанавливай последнюю резервную копию.</div>
+  </div>
+
+  <div class="card">
+    <div class="actions">
+      <button class="btn secondary" id="reload-btn">Загрузить файл</button>
+      <button class="btn ok" id="save-btn">Сохранить текст</button>
+      <label class="btn secondary" for="replace-file-input">Заменить файлом</label>
+      <button class="btn warn" id="restore-btn">Восстановить бэкап</button>
+      <button class="btn secondary" id="download-btn">Скачать актуальную версию</button>
+      <button class="btn secondary" id="download-backup-btn">Скачать бэкап</button>
+      <button class="btn primary" id="open-site-btn">Открыть сайт</button>
+    </div>
+    <input id="replace-file-input" class="hidden" type="file" accept=".html,text/html">
+    <div class="meta" id="meta">Подключаюсь к файлу…</div>
+    <textarea id="editor" spellcheck="false"></textarea>
+    <div class="status warn" id="status">Файл ещё не загружен.</div>
+  </div>
+</div>
+
+<script>
+const metaEl = document.getElementById('meta')
+const statusEl = document.getElementById('status')
+const editorEl = document.getElementById('editor')
+
+function setStatus(text, kind = 'warn'){
+  statusEl.className = 'status ' + kind
+  statusEl.textContent = text
+}
+
+async function loadContent(){
+  setStatus('Загружаю index.html…', 'warn')
+  try{
+    const res = await fetch('/api/editor/content', {cache:'no-store'})
+    const data = await res.json()
+    if(!res.ok) throw new Error(data.error || 'Не удалось загрузить файл')
+    editorEl.value = data.content || ''
+    metaEl.textContent = 'Файл: ' + (data.path || 'index.html')
+    setStatus('Файл загружен. После правок нажми "Сохранить текст".', 'ok')
+  }catch(e){
+    setStatus(e && e.message ? e.message : 'Ошибка загрузки', 'warn')
+  }
+}
+
+async function saveContent(){
+  setStatus('Сохраняю файл…', 'warn')
+  try{
+    const res = await fetch('/api/editor/content', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({content: editorEl.value})
+    })
+    const data = await res.json()
+    if(!res.ok) throw new Error(data.error || 'Не удалось сохранить файл')
+    setStatus('Сохранено. Обнови сайт, чтобы увидеть изменения.', 'ok')
+  }catch(e){
+    setStatus(e && e.message ? e.message : 'Ошибка сохранения', 'warn')
+  }
+}
+
+async function replaceWithFile(file){
+  if(!file) return
+  setStatus('Заменяю index.html выбранным файлом…', 'warn')
+  try{
+    const fd = new FormData()
+    fd.append('file', file)
+    const res = await fetch('/api/editor/replace', {
+      method: 'POST',
+      body: fd
+    })
+    const data = await res.json()
+    if(!res.ok) throw new Error(data.error || 'Не удалось заменить файл')
+    editorEl.value = await file.text()
+    setStatus('Файл полностью заменён. Обнови сайт и проверь результат.', 'ok')
+  }catch(e){
+    setStatus(e && e.message ? e.message : 'Ошибка замены файла', 'warn')
+  }
+}
+
+async function restoreBackup(){
+  setStatus('Восстанавливаю бэкап…', 'warn')
+  try{
+    const res = await fetch('/api/editor/restore', {method:'POST'})
+    const data = await res.json()
+    if(!res.ok) throw new Error(data.error || 'Не удалось восстановить бэкап')
+    await loadContent()
+    setStatus('Бэкап восстановлен. Обнови сайт и проверь страницу.', 'ok')
+  }catch(e){
+    setStatus(e && e.message ? e.message : 'Ошибка восстановления', 'warn')
+  }
+}
+
+document.getElementById('reload-btn').onclick = loadContent
+document.getElementById('save-btn').onclick = saveContent
+document.getElementById('replace-file-input').onchange = e => replaceWithFile(e.target.files && e.target.files[0])
+document.getElementById('restore-btn').onclick = restoreBackup
+document.getElementById('download-btn').onclick = () => { window.location.href = '/api/editor/download' }
+document.getElementById('download-backup-btn').onclick = () => { window.location.href = '/api/editor/download-backup' }
+document.getElementById('open-site-btn').onclick = () => { window.location.href = '/' }
+
+loadContent()
+</script>
+</body>
+</html>

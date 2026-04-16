@@ -1,0 +1,3220 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>HomeStock stable</title>
+<meta name="theme-color" content="#1f1711">
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#efe7dc; --surface:rgba(255,255,255,.82); --surface2:#e7dccf; --surface3:#f8f2ea; --border:rgba(71,45,18,.08);
+  --text:#17120d; --text2:rgba(23,18,13,.56); --text3:rgba(23,18,13,.3);
+  --black:#17120d; --warn:#c85b28; --ok:#25744d; --accent:#df8a45; --accent-soft:#f3c89f;
+  --shadow:0 18px 40px rgba(74,44,19,.10); --shadow-soft:0 10px 24px rgba(74,44,19,.08); --r:22px; --r-lg:32px;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{font-family:'DM Sans',sans-serif;background:
+  radial-gradient(circle at top left, rgba(248,211,173,.75), transparent 28%),
+  radial-gradient(circle at top right, rgba(255,255,255,.65), transparent 24%),
+  linear-gradient(180deg,#f7f0e6 0%, #efe5d8 44%, #ebdfd1 100%);
+color:var(--text);display:flex;justify-content:center}
+body::before{content:'';position:fixed;inset:0;background:
+  linear-gradient(120deg, rgba(255,255,255,.16), transparent 32%),
+  radial-gradient(circle at 50% 120%, rgba(133,82,33,.1), transparent 35%);
+pointer-events:none}
+.shell{width:100%;max-width:430px;min-height:100dvh;background:rgba(247,240,231,.78);position:relative;overflow:hidden;backdrop-filter:blur(18px);box-shadow:0 0 0 1px rgba(255,255,255,.4), 0 30px 80px rgba(54,31,11,.16)}
+.screen{position:absolute;inset:0;overflow-y:auto;display:none;padding-bottom:22px}
+.screen.active{display:block}
+.safe-top{padding-top:max(28px, env(safe-area-inset-top, 28px))}
+.scroll-pad{height:90px}
+.home-header{margin:18px 16px 18px;padding:24px 22px 22px;padding-top:max(34px, calc(env(safe-area-inset-top,0px) + 20px));padding-bottom:26px;border-radius:34px;position:relative;overflow:hidden;background:
+  radial-gradient(circle at top right, rgba(243,200,159,.92), transparent 34%),
+  linear-gradient(145deg, rgba(255,255,255,.95), rgba(247,236,223,.88));
+border:1px solid rgba(255,255,255,.72);box-shadow:var(--shadow)}
+.home-header::before{content:'';position:absolute;right:-28px;top:-26px;width:128px;height:128px;border-radius:50%;background:radial-gradient(circle, rgba(223,138,69,.22), rgba(223,138,69,0));pointer-events:none}
+.home-header::after{content:'';position:absolute;left:-36px;bottom:-54px;width:160px;height:120px;border-radius:50%;background:radial-gradient(circle, rgba(255,255,255,.72), transparent 70%);pointer-events:none}
+.home-greeting{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);margin-bottom:10px;position:relative;z-index:1}
+.home-title{font-size:38px;font-weight:800;line-height:.98;letter-spacing:-.045em;max-width:240px;position:relative;z-index:1}
+.home-title span{color:#7f6348}
+.home-header-top{display:grid;grid-template-columns:minmax(0,1fr) 150px;align-items:center;gap:16px;position:relative;z-index:1;min-height:150px}
+.home-add-btn{width:150px;height:150px;border:none;border-radius:36px;background:
+  radial-gradient(circle at 72% 24%, rgba(255,231,199,.92), transparent 34%),
+  linear-gradient(145deg, rgba(255,255,255,.96), rgba(242,224,202,.78));
+  box-shadow:0 22px 52px rgba(98,58,24,.16), inset 0 1px 0 rgba(255,255,255,.78);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;color:#7a431d;font-size:112px;line-height:.78;font-weight:200;flex:0 0 150px;border:1px solid rgba(255,255,255,.82)}
+.home-add-btn:active{transform:scale(.98)}
+.quick-add-sheet{position:fixed;inset:0;background:rgba(18,12,8,.26);backdrop-filter:blur(8px);display:none;align-items:flex-end;justify-content:center;z-index:220}
+.quick-add-sheet.show{display:flex}
+.quick-add-card{width:min(100%,430px);margin:0 12px max(14px, env(safe-area-inset-bottom,14px));padding:18px;background:linear-gradient(180deg, rgba(255,255,255,.96), rgba(247,241,233,.92));border:1px solid rgba(255,255,255,.8);border-radius:30px;box-shadow:0 28px 70px rgba(40,24,10,.22);animation:riseIn .22s ease both}
+.quick-add-title{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);margin-bottom:12px}
+.quick-add-actions{display:grid;gap:10px}
+.quick-add-option{border:none;border-radius:22px;padding:16px 18px;background:linear-gradient(180deg,#fff,#f2e7d9);display:flex;justify-content:space-between;align-items:center;font:700 15px 'DM Sans',sans-serif;color:var(--text);cursor:pointer;text-align:left}
+.quick-add-option span{display:block;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--text2);margin-top:3px}
+.quick-add-option strong{font-size:22px;line-height:1;color:#8f5b32}
+.quick-add-cancel{margin-top:10px;width:100%;border:none;border-radius:18px;padding:14px;background:#efe4d6;color:var(--text);font:700 14px 'DM Sans',sans-serif;cursor:pointer}
+.plan-hero{margin:0 16px 16px;padding:18px;border-radius:30px;background:
+  radial-gradient(circle at top right, rgba(223,138,69,.30), transparent 34%),
+  linear-gradient(145deg, rgba(255,255,255,.94), rgba(247,237,225,.86));
+  border:1px solid rgba(255,255,255,.75);box-shadow:var(--shadow-soft)}
+.plan-hero-title{font-size:24px;font-weight:850;letter-spacing:-.04em;line-height:1.05}
+.plan-hero-sub{margin-top:7px;font-size:13px;line-height:1.35;color:var(--text2)}
+.plan-section{margin:0 16px 14px}
+.plan-section-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 10px}
+.plan-section-title{font-size:12px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;color:var(--text2)}
+.plan-count{font-size:11px;font-weight:800;color:#8f5b32;background:#f4dfc7;border-radius:999px;padding:5px 9px}
+.plan-card{margin-bottom:10px}
+.plan-card .item-card{padding:14px}
+.plan-priority{display:inline-flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;font-size:10px;font-weight:850;letter-spacing:.1em;text-transform:uppercase}
+.plan-priority.today{background:#fde9e2;color:#c85b28}
+.plan-priority.week{background:#fff0df;color:#b85d18}
+.plan-priority.later{background:#e6f4ea;color:#25744d}
+.plan-reason{font-size:12px;color:var(--text2);margin-top:6px;line-height:1.25}
+.plan-banner-summary{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+.plan-banner-pill{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.14);font-size:12px;font-weight:750;color:rgba(255,255,255,.86)}
+.plan-hero-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.plan-metric{border-radius:18px;padding:12px 10px;background:rgba(255,255,255,.62);border:1px solid rgba(255,255,255,.72)}
+.plan-metric strong{display:block;font-size:24px;line-height:1;font-weight:850;letter-spacing:-.04em}
+.plan-metric span{display:block;margin-top:5px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--text2)}
+.plan-toolbar{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.plan-toolbar .small-btn{padding:12px 10px;border-radius:16px}
+.plan-section.today .plan-section-title{color:#c85b28}
+.plan-section.soon .plan-section-title{color:#b85d18}
+.plan-section.week .plan-section-title{color:#8f5b32}
+.plan-section.later .plan-section-title{color:#25744d}
+.plan-priority.soon{background:#fff5d6;color:#9a6a00}
+.plan-card.manual .item-card{box-shadow:0 18px 34px rgba(143,91,50,.14)}
+.plan-reason{padding-left:8px}
+.plan-card .item-card{content-visibility:visible}
+.plan-empty-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:14px 16px 0}
+.summary-strip{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:0 16px 22px}
+.summary-card{background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(250,244,237,.82));border-radius:24px;padding:16px 14px;border:1px solid rgba(255,255,255,.65);box-shadow:var(--shadow-soft)}
+.sc-num{font-size:30px;font-weight:800;letter-spacing:-.05em;line-height:1}
+.sc-label{font-size:11px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--text2);margin-top:4px}
+.sc-num.warn{color:var(--warn)}
+.banner{margin:0 16px 20px;background:
+  radial-gradient(circle at top right, rgba(223,138,69,.42), transparent 32%),
+  linear-gradient(135deg, #1d1712, #322417 72%);
+border-radius:30px;padding:20px 20px 18px;color:#fff;display:none;box-shadow:0 20px 40px rgba(23,18,13,.26)}
+.banner-eyebrow{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.58);margin-bottom:8px}
+.banner-title{font-size:22px;font-weight:800;line-height:1.04;margin-bottom:14px;letter-spacing:-.03em}
+.banner-items{display:flex;flex-wrap:wrap;gap:6px}
+.banner-tag{padding:6px 11px;background:rgba(255,255,255,.1);border-radius:999px;font-size:12px;font-weight:600;color:rgba(255,255,255,.84)}
+.banner-tag.urgent{background:rgba(255,255,255,.22);color:#fff}
+.section-header{padding:0 18px 12px;display:flex;justify-content:space-between;align-items:center}
+.section-title{font-size:12px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text2)}
+.items-list{padding:0 16px;display:flex;flex-direction:column;gap:12px}
+.item-card{background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(247,241,233,.86));border:1px solid rgba(255,255,255,.72);border-radius:28px;padding:15px 16px;display:flex;align-items:center;gap:14px;cursor:pointer;position:relative;content-visibility:auto;contain-intrinsic-size:96px;box-shadow:var(--shadow-soft);transition:transform .24s ease, box-shadow .24s ease}
+.item-card:active{transform:scale(.985)}
+.item-thumb{width:58px;height:58px;border-radius:18px;background:linear-gradient(180deg,#f0e4d5,#dcc9b4);flex:0 0 58px;overflow:hidden;display:flex;align-items:center;justify-content:center;box-shadow:inset 0 1px 0 rgba(255,255,255,.55)}
+.item-thumb img{width:100%;height:100%;object-fit:cover}
+.item-thumb-fallback{font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:#75583d}
+.item-info{flex:1;min-width:0}
+.item-name{font-size:16px;font-weight:800;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.item-sub{font-size:12px;color:var(--text2);margin-top:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.item-right{text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:5px}
+.item-qty{font-size:24px;font-weight:800;letter-spacing:-.04em;line-height:1}
+.item-days{font-size:11px;color:var(--text2);margin-top:0;max-width:100px}
+.item-status-chip{padding:5px 9px;border-radius:999px;font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase}
+.item-status-chip.ok{background:#e6f4ea;color:#25744d}
+.item-status-chip.warn{background:#fff0df;color:#c16a1c}
+.item-status-chip.urgent{background:#fde9e2;color:#c85b28}
+.item-card::before{content:'';position:absolute;left:0;top:12px;bottom:12px;width:4px;border-radius:0 4px 4px 0;background:var(--surface2)}
+.item-card.status-ok::before{background:#4caf50}
+.item-card.status-warn::before{background:#ff9800}
+.item-card.status-urgent::before{background:var(--warn)}
+.fab{position:fixed;bottom:max(24px, env(safe-area-inset-bottom, 24px));left:50%;transform:translateX(-50%);background:linear-gradient(135deg,#1f1711,#342418);color:#fff;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:17px 30px;font-family:'DM Sans',sans-serif;font-size:15px;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:10px;box-shadow:0 22px 40px rgba(23,18,13,.22);z-index:100;will-change:transform}
+.fab-icon{width:20px;height:20px;position:relative;flex:0 0 20px}
+.fab-icon::before,.fab-icon::after{content:'';position:absolute;background:#fff;border-radius:2px}
+.fab-icon::before{width:2px;height:14px;left:9px;top:3px}
+.fab-icon::after{width:14px;height:2px;left:3px;top:9px}
+
+#s-camera{background:#0a0a0a;color:#fff}
+.camera-topbar{padding:max(20px, env(safe-area-inset-top,20px)) 20px 16px;display:flex;justify-content:space-between;align-items:center}
+.cam-title{font-size:16px;font-weight:600}
+.cam-back{width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center;cursor:pointer;border:none;color:#fff;font-size:18px}
+.camera-window{position:relative;width:calc(100% - 32px);aspect-ratio:3/4;margin:0 16px;border-radius:26px;overflow:hidden;background:#111}
+.cam-stage{position:absolute;inset:0}
+#cam-live{background:radial-gradient(ellipse at 40% 35%, #1a1a2e 0%, #0a0a0a 70%);display:flex;align-items:center;justify-content:center}
+.scan-frame{position:absolute;inset:20px;border-radius:18px;border:1.5px solid rgba(255,255,255,.15)}
+.scan-line{position:absolute;left:20px;right:20px;height:2px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.8),transparent);box-shadow:0 0 12px rgba(255,255,255,.4);animation:scanMove 2.6s linear infinite}
+@keyframes scanMove{0%{top:20px;opacity:0}10%{opacity:1}90%{opacity:1}100%{top:calc(100% - 22px);opacity:0}}
+.demo-product{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:60%;aspect-ratio:1/1.3;background:linear-gradient(160deg,#f0ede8,#dedad3);border-radius:18px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;box-shadow:0 8px 24px rgba(0,0,0,.24)}
+.dp-brand{font-size:36px;font-weight:800;color:#1a1a1a}
+.dp-name{font-size:13px;color:#666;font-weight:500}
+.dp-count{font-size:56px;font-weight:800;color:#1a1a1a;line-height:1}
+.dp-unit{font-size:12px;color:#888}
+#cam-captured{display:none}
+#cam-captured img{width:100%;height:100%;object-fit:cover}
+.analyzing-badge{position:absolute;top:18px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.7);backdrop-filter:none;border:1px solid rgba(255,255,255,.12);border-radius:999px;padding:7px 16px;display:none;align-items:center;gap:8px;font-size:12px;font-weight:500;color:rgba(255,255,255,.85)}
+.analyzing-dot{width:6px;height:6px;border-radius:50%;background:#fff;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+.result-overlay{position:absolute;bottom:0;left:0;right:0;padding:16px;background:linear-gradient(transparent,rgba(0,0,0,.9) 20%);display:none}
+.result-card{background:rgba(15,15,15,.85);backdrop-filter:none;border:1px solid rgba(255,255,255,.12);border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.result-icon{width:48px;height:48px;border-radius:12px;background:rgba(255,255,255,.06);overflow:hidden;display:flex;align-items:center;justify-content:center}
+.result-icon img{width:100%;height:100%;object-fit:cover}
+.result-main{flex:1;min-width:0}
+.result-name-big{font-size:16px;font-weight:700}
+.result-sub{font-size:12px;color:rgba(255,255,255,.5);margin-top:2px}
+.camera-controls{padding:16px 20px 0;display:flex;flex-direction:column;gap:10px}
+.ctrl-row{display:flex;gap:10px}
+.ctrl-btn{flex:1;padding:14px;border-radius:20px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#fff;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:500;cursor:pointer;text-align:center}
+.ctrl-btn.primary{background:#fff;color:#000;border-color:#fff;font-weight:600}
+input[type=file]{display:none}
+
+.confirm-header,.detail-header{padding:max(18px, env(safe-area-inset-top,18px)) 20px 18px;display:flex;align-items:center;gap:14px}
+.back-btn{width:42px;height:42px;border-radius:50%;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.72);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--text);flex:0 0 42px;box-shadow:var(--shadow-soft)}
+.confirm-title{font-size:24px;font-weight:800;letter-spacing:-.04em}
+.confirm-photo,.detail-photo{margin:0 16px 16px;height:200px;border-radius:32px;overflow:hidden;background:linear-gradient(180deg,#f0e4d5,#deccb7);position:relative;box-shadow:var(--shadow-soft)}
+.detail-photo{height:220px}
+.confirm-photo img,.detail-photo img{width:100%;height:100%;object-fit:cover}
+.confirm-photo-placeholder,.detail-photo-placeholder{width:100%;height:100%;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:6px;color:var(--text3)}
+.confirm-fields{padding:0 16px;display:flex;flex-direction:column;gap:12px}
+.field-group,.qty-section,.prog-section,.history-item{background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(247,241,233,.88));border:1px solid rgba(255,255,255,.72);border-radius:26px;box-shadow:var(--shadow-soft)}
+.field-group{overflow:hidden}
+.field-row{padding:14px 16px;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid rgba(71,45,18,.08)}
+.field-row:last-child{border-bottom:none}
+.field-label{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text2)}
+.field-val{font-size:16px;font-weight:700;color:var(--text)}
+.qty-section{padding:18px}
+.qty-label,.prog-title,.history-title{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text2)}
+.qty-label{margin-bottom:14px}
+.qty-control{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.qty-btn{width:52px;height:52px;border-radius:18px;background:linear-gradient(180deg,#f2e6d7,#e6d6c4);border:1px solid rgba(255,255,255,.72);font-size:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text);box-shadow:inset 0 1px 0 rgba(255,255,255,.6)}
+.qty-display{flex:1;text-align:center}
+.qty-num{font-size:56px;font-weight:800;letter-spacing:-.06em;line-height:1}
+.qty-of{font-size:12px;color:var(--text2);margin-top:2px}
+.confirm-save-btn{margin:16px 16px 0;width:calc(100% - 32px);padding:18px;background:linear-gradient(135deg,#1f1711,#342418);color:#fff;border:none;border-radius:24px;font-family:'DM Sans',sans-serif;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 18px 34px rgba(23,18,13,.2)}
+.detail-main{padding:0 16px}
+.detail-name{font-size:32px;font-weight:800;letter-spacing:-.05em}
+.detail-meta{font-size:14px;color:var(--text2);margin-top:6px}
+.detail-desc{font-size:13px;color:var(--text2);margin-top:10px;line-height:1.4}
+.prog-section{margin:16px 0;padding:18px}
+.prog-header{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+.prog-num{font-size:34px;font-weight:800;letter-spacing:-.05em}
+.prog-unit{font-size:13px;color:var(--text2);margin-left:3px}
+.prog-bar-bg{height:9px;background:#eadccd;border-radius:999px;overflow:hidden}
+.prog-bar-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#201813,#7b5432);transition:width .25s ease}
+.prog-bar-fill.warn{background:var(--warn)}
+.prog-footer{display:flex;justify-content:space-between;margin-top:8px}
+.prog-days{font-size:12px;color:var(--text2)}
+.prog-status{font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border-radius:999px;background:var(--surface2);color:var(--text2)}
+.prog-status.ok{background:#e8f5e9;color:#2e7d32}
+.prog-status.warn{background:#fff3e0;color:#e65100}
+.prog-status.urgent{background:#fbe9e7;color:var(--warn)}
+.action-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.action-btn{padding:17px 12px;border-radius:24px;background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(247,241,233,.88));border:1px solid rgba(255,255,255,.72);cursor:pointer;font-family:'DM Sans',sans-serif;font-size:14px;font-weight:700;color:var(--text);text-align:center;box-shadow:var(--shadow-soft)}
+.action-btn span{display:block;font-size:11px;font-weight:500;color:var(--text2);margin-top:2px}
+.action-btn.buy{background:linear-gradient(135deg,#1f1711,#342418);color:#fff;border-color:#1f1711}
+.action-btn.buy span{color:rgba(255,255,255,.5)}
+.history-section{margin-bottom:24px}
+.history-title{margin-bottom:10px}
+.history-list{display:flex;flex-direction:column;gap:6px}
+.history-item{padding:14px 14px;display:flex;align-items:center;gap:10px;content-visibility:auto;contain-intrinsic-size:48px}
+.history-dot{width:8px;height:8px;border-radius:50%;flex:0 0 8px}
+.history-dot.used{background:#ccc}
+.history-dot.bought{background:#4caf50}
+.history-dot.created{background:#90caf9}
+.history-text{flex:1;font-size:13px;color:var(--text)}
+.history-date{font-size:11px;color:var(--text2);font-family:'DM Mono',monospace}
+.toast{position:fixed;bottom:max(102px, calc(env(safe-area-inset-bottom,0px) + 102px));left:50%;transform:translateX(-50%) translateY(20px);background:rgba(23,18,13,.92);color:#fff;padding:13px 20px;border-radius:999px;font-size:14px;font-weight:600;white-space:nowrap;opacity:0;transition:all .25s;pointer-events:none;z-index:999;box-shadow:0 18px 32px rgba(23,18,13,.26)}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.empty-state{text-align:center;padding:42px 20px;color:var(--text2);background:linear-gradient(180deg, rgba(255,255,255,.75), rgba(246,239,231,.55));border:1px dashed rgba(71,45,18,.12);border-radius:28px}
+.empty-icon{font-size:42px;margin-bottom:12px}
+.empty-text{font-size:16px;font-weight:700}
+.empty-sub{font-size:13px;color:var(--text3);margin-top:6px}
+@media (prefers-reduced-motion: reduce){
+  *{animation:none!important;transition:none!important;scroll-behavior:auto!important}
+}
+
+.home-actions{padding:0 16px 14px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.home-action-btn{border:none;background:linear-gradient(180deg, rgba(255,255,255,.9), rgba(247,241,233,.84));border:1px solid rgba(255,255,255,.72);padding:15px 12px;border-radius:22px;font:700 14px 'DM Sans',sans-serif;color:var(--text);cursor:pointer;text-align:center;white-space:nowrap;box-shadow:var(--shadow-soft)}
+.network-card{margin:0 16px 16px;padding:16px 16px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(247,241,233,.84));border:1px solid rgba(255,255,255,.72);border-radius:26px;box-shadow:var(--shadow-soft)}
+.network-title{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
+.network-main{font-size:13px;line-height:1.45;color:var(--text)}
+.network-link{font-family:'DM Mono',monospace;font-size:12px;color:var(--text2);margin-top:8px;word-break:break-all}
+.network-link strong{color:var(--text)}
+.toolbar-card,.analytics-card,.settings-card,.template-card{margin:0 16px 14px;padding:16px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(247,241,233,.84));border:1px solid rgba(255,255,255,.72);border-radius:26px;box-shadow:var(--shadow-soft)}
+.toolbar-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.search-input,.sort-select,.category-select{width:100%;padding:14px 15px;border-radius:18px;border:1px solid rgba(71,45,18,.08);background:#fffaf4;color:var(--text);font:600 14px 'DM Sans',sans-serif}
+.search-input::placeholder{color:var(--text2)}
+.category-row{padding:0 16px 14px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none}
+.category-row::-webkit-scrollbar{display:none}
+.category-chip{flex:0 0 auto;border:none;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.7);padding:11px 15px;border-radius:999px;font:700 12px 'DM Sans',sans-serif;cursor:pointer;color:var(--text);white-space:nowrap}
+.category-chip.active{background:linear-gradient(135deg,#8f5b32,#c88045)!important;color:#fff!important;border-color:#8f5b32!important}
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.analytics-big{font-size:34px;font-weight:800;letter-spacing:-.05em}
+.analytics-label{font-size:11px;font-weight:800;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);margin-bottom:8px}
+.analytics-bar{height:10px;background:#eadccd;border-radius:999px;overflow:hidden;margin-top:10px}
+.analytics-fill{height:100%;border-radius:999px;background:linear-gradient(90deg,#8f5b32,#df8a45)}
+.analytics-row{display:flex;justify-content:space-between;gap:10px;margin-top:10px;font-size:13px}
+.mini-list{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.mini-item{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-radius:18px;background:rgba(255,255,255,.55);font-size:13px}
+.template-actions{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.small-btn{border:none;border-radius:14px;padding:10px 12px;font:700 12px 'DM Sans',sans-serif;cursor:pointer}
+.small-btn.primary{background:linear-gradient(135deg,#1f1711,#342418);color:#fff}
+.small-btn.secondary{background:#efe4d6;color:var(--text)}
+.check-row{display:flex;align-items:flex-start;gap:12px}
+.shopping-check{width:22px;height:22px;border-radius:8px;border:2px solid rgba(31,23,17,.24);appearance:none;background:#fff;margin-top:4px;flex:0 0 22px}
+.shopping-check:checked{background:linear-gradient(135deg,#1f1711,#8f5b32);border-color:#1f1711}
+.shopping-check:checked::after{content:'✓';display:block;color:#fff;font-size:13px;line-height:18px;text-align:center}
+.checked-item{opacity:.56}
+.checked-item .item-name,.checked-item .item-sub,.checked-item .item-days{text-decoration:line-through}
+.bottom-nav{position:fixed;left:50%;bottom:max(8px, env(safe-area-inset-bottom,8px));transform:translateX(-50%);width:min(100%,430px);padding:12px 12px 10px;background:linear-gradient(180deg, rgba(255,255,255,.86), rgba(244,234,223,.94));backdrop-filter:blur(18px);border-top:1px solid rgba(71,45,18,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:6px;z-index:120}
+.nav-btn{border:none;background:transparent;border-radius:18px;padding:10px 8px;font:700 11px 'DM Sans',sans-serif;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+.nav-btn.active{background:rgba(255,255,255,.72);color:var(--text);box-shadow:var(--shadow-soft)}
+.nav-ico{font-size:18px;line-height:1}
+.detail-photo img,.confirm-photo img,.result-icon img,.item-thumb img{object-fit:contain;background:#f8efe3}
+#cam-captured img{object-fit:contain;background:#0e0e0e}
+.demo-product{background:linear-gradient(160deg,#fffaf4,#ead8c4);border:1px solid rgba(255,255,255,.65)}
+.scan-hint{font-size:14px;font-weight:700;color:#5c4b3c;text-align:center;max-width:180px;line-height:1.2}
+.scan-subhint{font-size:11px;color:#8f7a67;text-transform:uppercase;letter-spacing:.14em}
+.filter-row{padding:0 16px 14px;display:flex;gap:8px;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+.filter-row::-webkit-scrollbar{display:none}
+.filter-chip{flex:0 0 auto;border:none;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.7);padding:11px 15px;border-radius:999px;font:700 12px 'DM Sans',sans-serif;cursor:pointer;color:var(--text);white-space:nowrap;letter-spacing:.08em;text-transform:uppercase}
+.filter-chip.active{background:linear-gradient(135deg,#1f1711,#342418)!important;color:#fff!important;border-color:#1f1711!important}
+.screen.active .home-header,.screen.active .summary-card,.screen.active .banner,.screen.active .network-card,.screen.active .item-card{animation:riseIn .44s ease both}
+.screen.active .summary-card:nth-child(2),.screen.active .item-card:nth-child(2){animation-delay:.04s}
+.screen.active .summary-card:nth-child(3),.screen.active .item-card:nth-child(3){animation-delay:.08s}
+@keyframes riseIn{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width:360px){.home-actions{grid-template-columns:1fr}}
+
+.category-row.collapsed{display:none}
+.toolbar-card.minimal{padding-bottom:12px}
+.settings-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.settings-actions .home-action-btn{width:100%;white-space:normal}
+.camera-premium{background:
+  radial-gradient(circle at top left, rgba(255,255,255,.18), transparent 20%),
+  radial-gradient(circle at top right, rgba(223,138,69,.20), transparent 28%),
+  linear-gradient(180deg,#0f0d12 0%, #151019 46%, #0d0d11 100%)}
+.camera-premium .camera-topbar{padding:20px 18px 16px}
+.camera-premium .cam-back{background:rgba(255,255,255,.12);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.18);width:44px;height:44px}
+.camera-premium .cam-title{font-size:24px;font-weight:800;letter-spacing:-.04em}
+.camera-premium .camera-window{margin:0 16px;border-radius:34px;background:
+  linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.03)),
+  radial-gradient(circle at top, rgba(120,189,255,.10), transparent 30%),
+  #09090c;
+  box-shadow:0 30px 80px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.08);
+  border:1px solid rgba(255,255,255,.08)}
+.camera-premium .scan-frame{inset:18px;border-radius:26px;border:1px solid rgba(255,255,255,.12);box-shadow:inset 0 0 0 1px rgba(255,255,255,.04)}
+.camera-premium .scan-line{left:18px;right:18px;height:3px;background:linear-gradient(90deg,transparent,rgba(255,214,164,.95),transparent);box-shadow:0 0 18px rgba(255,214,164,.65)}
+.camera-premium #cam-live{background:
+  radial-gradient(circle at 50% 20%, rgba(255,255,255,.10), transparent 25%),
+  linear-gradient(180deg,#15121a 0%, #0c0b10 100%)}
+.camera-premium .demo-product{width:66%;border-radius:28px;background:
+  linear-gradient(160deg, rgba(255,255,255,.96), rgba(237,227,214,.86));
+  box-shadow:0 18px 44px rgba(0,0,0,.32), inset 0 1px 0 rgba(255,255,255,.72)}
+.camera-premium .analyzing-badge{top:20px;background:rgba(255,255,255,.12);backdrop-filter:blur(20px);border-color:rgba(255,255,255,.16)}
+.camera-premium .result-overlay{padding:18px}
+.camera-premium .result-card{background:rgba(255,255,255,.12);backdrop-filter:blur(22px);border-color:rgba(255,255,255,.16)}
+.camera-premium .camera-hint{margin:16px 16px 0;padding:14px 16px;border-radius:22px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(16px);color:rgba(255,255,255,.78);font-size:13px;line-height:1.45}
+.camera-premium{padding-bottom:140px}
+.camera-premium .camera-controls{position:sticky;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);z-index:8;margin:16px;padding:16px;gap:12px;border-radius:28px;background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.10);backdrop-filter:blur(22px);box-shadow:0 24px 50px rgba(0,0,0,.35)}
+.camera-premium .camera-dock{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:stretch}
+.camera-premium .camera-primary,.camera-premium .camera-secondary,.camera-premium .camera-tertiary{border:none;border-radius:26px;font-family:'DM Sans',sans-serif;cursor:pointer}
+.camera-premium .camera-primary{display:flex;align-items:center;justify-content:center;min-height:68px;padding:0 20px;background:linear-gradient(135deg,#fff7ef,#f1d3ad);color:#1f1711;font-size:16px;font-weight:800;box-shadow:0 14px 30px rgba(223,138,69,.24)}
+.camera-premium .camera-primary span{display:flex;flex-direction:column;align-items:flex-start;line-height:1.1}
+.camera-premium .camera-primary small{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:rgba(31,23,17,.52)}
+.camera-premium .camera-secondary{min-width:92px;padding:0 16px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;font-weight:700;backdrop-filter:blur(16px)}
+.camera-premium .camera-actions{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.camera-premium .camera-tertiary{min-height:52px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#fff;font-size:14px;font-weight:700;backdrop-filter:blur(16px)}
+.camera-premium .camera-primary:active,.camera-premium .camera-secondary:active,.camera-premium .camera-tertiary:active{transform:translateY(1px) scale(.99)}
+.shell.camera-open .bottom-nav{display:none!important}
+.settings-card .network-card,.settings-card .home-actions{margin:0;padding:0;background:transparent;border:none;box-shadow:none}
+.settings-card .network-title{margin-bottom:10px}
+.settings-card .home-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.settings-card .home-action-btn{padding:14px 12px}
+.home-search-hidden{display:none!important}
+.category-screen-list{padding-bottom:12px}
+.selection-toolbar{margin:0 16px 14px;display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px}
+.selection-toolbar .small-btn{padding:12px 8px;border-radius:16px}
+.select-check{width:24px;height:24px;border-radius:9px;border:2px solid rgba(31,23,17,.24);appearance:none;background:#fff;flex:0 0 24px}
+.select-check:checked{background:linear-gradient(135deg,#1f1711,#8f5b32);border-color:#1f1711}
+.select-check:checked::after{content:'✓';display:block;color:#fff;font-size:14px;line-height:20px;text-align:center}
+.item-card.selecting{box-shadow:0 16px 36px rgba(143,91,50,.16);outline:1px solid rgba(143,91,50,.16)}
+.plan-card{background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(247,241,233,.84));border:1px solid rgba(255,255,255,.72);border-radius:28px;padding:10px;box-shadow:var(--shadow-soft);overflow:hidden}
+.plan-card .item-card{box-shadow:none;border:none;background:transparent;padding:6px;display:block}
+.plan-card .check-row{display:grid;grid-template-columns:auto 58px minmax(0,1fr) auto;align-items:center;gap:10px;width:100%}
+.plan-card .item-info{min-width:0;overflow:hidden}
+.plan-card .item-name,.plan-card .item-sub{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.plan-card .item-right{min-width:74px;max-width:92px}
+.plan-card .item-days{max-width:92px;line-height:1.15;overflow:hidden;text-overflow:ellipsis}
+.plan-card .item-status-chip{white-space:nowrap}
+.plan-card .plan-reason{margin:6px 6px 2px 102px;padding-left:0;word-break:break-word}
+.original-photo-card{margin:14px 0 0;padding:14px;border-radius:22px;background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(247,241,233,.84));border:1px solid rgba(255,255,255,.72);box-shadow:var(--shadow-soft)}
+.original-photo-title{font-size:11px;font-weight:850;letter-spacing:.16em;text-transform:uppercase;color:var(--text2);margin-bottom:10px}
+.original-photo-card img{width:100%;max-height:240px;object-fit:contain;border-radius:18px;background:#f8efe3}
+#detail-photo{height:auto;overflow:visible;background:transparent;box-shadow:none}
+#detail-photo > img,#detail-photo > .detail-photo-placeholder{height:220px;border-radius:32px;background:linear-gradient(180deg,#f0e4d5,#deccb7);box-shadow:var(--shadow-soft);overflow:hidden}
+.confirm-edit-input{width:100%;border:none;background:transparent;text-align:right;font:800 15px 'DM Sans',sans-serif;color:var(--text);outline:none}
+.confirm-edit-input.small{max-width:90px}
+.confirm-prompt-box{margin:0 16px 12px;padding:14px 16px;border-radius:24px;background:linear-gradient(180deg, rgba(255,255,255,.95), rgba(247,241,233,.88));border:1px solid rgba(255,255,255,.72);box-shadow:var(--shadow-soft)}
+.confirm-prompt-box textarea{width:100%;min-height:62px;margin-top:8px;border:none;resize:vertical;background:#f5eadc;border-radius:16px;padding:12px;font:700 14px 'DM Sans',sans-serif;color:var(--text);outline:none}
+.mini-action{border:none;border-radius:999px;background:#efe4d6;color:var(--text);font:850 12px 'DM Sans',sans-serif;padding:10px 12px;cursor:pointer}
+.detail-extra-actions{display:grid;grid-template-columns:1fr;gap:10px;margin:0 0 16px}
+.v3-home .home-header{background:radial-gradient(circle at 86% 14%,rgba(255,186,116,.82),transparent 34%),linear-gradient(145deg,#19110b,#3a281a 72%);color:#fff;border-color:rgba(255,255,255,.16);box-shadow:0 24px 70px rgba(45,25,10,.26)}
+.v3-home .home-greeting{color:rgba(255,255,255,.55)}
+.v3-home .home-title span{color:#f6c493}
+.v3-home .home-add-btn{background:linear-gradient(145deg,#fff6ea,#d99757);color:#21150d;border-color:rgba(255,255,255,.55);box-shadow:0 28px 70px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.86)}
+.v3-toolbar{margin:0 16px 14px;padding:14px;border-radius:28px;background:rgba(255,255,255,.78);border:1px solid rgba(255,255,255,.78);box-shadow:var(--shadow-soft);display:grid;gap:10px}
+.v3-toolbar-row{display:grid;grid-template-columns:1fr 150px;gap:10px}
+.v3-toolbar input,.v3-toolbar select{width:100%;border:none;border-radius:18px;background:#f6ebde;padding:13px 14px;font:800 13px 'DM Sans',sans-serif;color:var(--text);outline:none}
+.v3-chip-row{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.v3-chip{border:none;border-radius:999px;padding:10px 13px;background:#f7eadc;color:#71513a;font:850 11px 'DM Sans',sans-serif;letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}
+.v3-chip.active{background:#21150d;color:#fff}
+.v3-card{padding:0;display:block;overflow:hidden;border-radius:32px;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,240,231,.9));box-shadow:0 18px 42px rgba(74,44,19,.11);content-visibility:auto;contain-intrinsic-size:310px}
+.v3-card::before{display:none}
+.v3-card-media{height:164px;background:linear-gradient(135deg,#f4e7d8,#fff8ef);display:flex;align-items:center;justify-content:center;position:relative}
+.v3-card-media img{width:100%;height:100%;object-fit:contain;padding:10px}
+.v3-card-status{position:absolute;left:14px;top:14px}
+.v3-card-body{padding:15px 16px 16px}
+.v3-card-title{font-size:19px;font-weight:900;line-height:1.05;letter-spacing:-.035em;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.v3-card-meta{margin-top:7px;font-size:12px;font-weight:750;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.v3-card-foot{display:flex;align-items:end;justify-content:space-between;margin-top:14px;gap:12px}
+.v3-stock-num{font-size:34px;font-weight:950;line-height:.9;letter-spacing:-.06em}
+.v3-stock-label{font-size:10px;font-weight:850;color:var(--text2);text-transform:uppercase;letter-spacing:.12em;margin-top:4px}
+.v3-days{text-align:right;font-size:12px;font-weight:850;color:var(--text2);max-width:130px}
+.v3-progress{height:7px;border-radius:999px;background:#eadcca;overflow:hidden;margin-top:12px}
+.v3-progress span{display:block;height:100%;border-radius:999px;background:#25744d}
+.v3-progress.warn span{background:#c16a1c}
+.v3-progress.urgent span{background:#c85b28}
+.v3-quick-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.v3-quick-actions button{border:none;border-radius:16px;padding:11px 10px;background:#efe4d6;color:var(--text);font:900 12px 'DM Sans',sans-serif;cursor:pointer}
+.v3-quick-actions .buy{background:#21150d;color:#fff}
+.v3-section-title{padding:0 18px 12px;font-size:12px;font-weight:950;letter-spacing:.16em;text-transform:uppercase;color:#876a50}
+.simple-analytics{padding:0 16px 110px;display:grid;gap:14px}
+.simple-hero{border-radius:34px;padding:22px;background:radial-gradient(circle at 86% 10%,rgba(255,196,132,.8),transparent 34%),linear-gradient(145deg,#21150d,#4a301d);color:#fff;box-shadow:0 24px 70px rgba(45,25,10,.25)}
+.simple-kicker{font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:rgba(255,255,255,.56)}
+.simple-title{font-size:30px;font-weight:950;letter-spacing:-.055em;line-height:1.02;margin-top:8px}
+.simple-sub{font-size:14px;line-height:1.35;color:rgba(255,255,255,.76);margin-top:10px}
+.simple-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.simple-card{border-radius:28px;padding:16px;background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(248,240,231,.88));border:1px solid rgba(255,255,255,.78);box-shadow:var(--shadow-soft)}
+.simple-num{font-size:36px;font-weight:950;letter-spacing:-.06em;line-height:.9}
+.simple-label{margin-top:7px;font-size:12px;font-weight:850;color:var(--text2);line-height:1.2}
+.simple-help{font-size:13px;color:var(--text2);line-height:1.35;margin-top:8px}
+.simple-list{display:grid;gap:9px;margin-top:12px}
+.simple-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;border-radius:20px;padding:12px;background:rgba(255,255,255,.62)}
+.simple-dot{width:38px;height:38px;border-radius:14px;background:#f1ddc7;display:flex;align-items:center;justify-content:center;font-weight:950;color:#7a4e2d}
+.simple-row-title{font-size:14px;font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.simple-row-sub{font-size:12px;color:var(--text2);margin-top:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.simple-pill{border-radius:999px;padding:7px 9px;font-size:11px;font-weight:950;background:#f3dfc7;color:#8c552d;white-space:nowrap}
+.simple-pill.urgent{background:#fde9e2;color:#c85b28}
+.simple-pill.ok{background:#e6f4ea;color:#25744d}
+.simple-note{border-radius:24px;padding:14px 16px;background:#fff7ed;color:#72543a;font-size:13px;line-height:1.35;font-weight:750}
+@media (max-width:370px){
+  .plan-card .check-row{grid-template-columns:auto 50px minmax(0,1fr);grid-template-areas:"check thumb info" ". right right"}
+  .plan-card .shopping-check{grid-area:check}
+  .plan-card .item-thumb{grid-area:thumb;width:50px;height:50px;flex-basis:50px}
+  .plan-card .item-info{grid-area:info}
+  .plan-card .item-right{grid-area:right;align-items:flex-start;text-align:left;max-width:none;margin-left:0}
+  .plan-card .plan-reason{margin-left:84px}
+}
+
+</style>
+</head>
+<body>
+<div class="shell">
+
+<div id="s-home" class="screen active">
+  <div class="home-header safe-top">
+    <div class="home-greeting">Сегодня</div>
+    <div class="home-title">Запасы<br><span>дома</span></div>
+  </div>
+  <div class="summary-strip">
+    <div class="summary-card"><div class="sc-num" id="sum-total">0</div><div class="sc-label">Товаров</div></div>
+    <div class="summary-card"><div class="sc-num warn" id="sum-warn">0</div><div class="sc-label">Скоро</div></div>
+    <div class="summary-card"><div class="sc-num warn" id="sum-urgent">0</div><div class="sc-label">Срочно</div></div>
+  </div>
+  <div id="shopping-banner" class="banner" style="cursor:pointer">
+    <div class="banner-eyebrow">Список покупок</div>
+    <div class="banner-title" id="banner-title">Нужно купить</div>
+    <div class="banner-items" id="banner-items"></div>
+  </div>
+  
+<div class="section-header"><div class="section-title">Все запасы</div></div>
+<div class="network-card">
+  <div class="network-title">Access</div>
+  <div class="network-main" id="network-status">Загружаю адрес для телефона и статус Gemini…</div>
+  <div class="network-link" id="network-url"></div>
+</div>
+<div class="home-actions">
+  <button id="btn-add-manual" class="home-action-btn">Вручную</button>
+  <button id="btn-export" class="home-action-btn">Экспорт</button>
+  <label for="btn-import-file" class="home-action-btn" style="display:flex;align-items:center;justify-content:center">Импорт</label>
+  <input id="btn-import-file" type="file" accept="application/json" style="display:none">
+  <button id="btn-clear-all" class="home-action-btn">Очистить</button>
+</div>
+<div class="toolbar-card">
+  <div class="toolbar-grid">
+    <input id="search-input" class="search-input" type="search" placeholder="Поиск по товарам, брендам, описанию">
+    <select id="sort-select" class="sort-select">
+      <option value="status">Сначала важное</option>
+      <option value="name">По названию</option>
+      <option value="qty">По остатку</option>
+      <option value="date">По дате добавления</option>
+    </select>
+  </div>
+</div>
+<div class="category-row" id="category-bar"></div>
+<div class="filter-row" id="filter-bar">
+  <button class="filter-chip active" data-filter="all">Все</button>
+  <button class="filter-chip" data-filter="warn">Скоро</button>
+  <button class="filter-chip" data-filter="urgent">Срочно</button>
+</div>
+<div class="items-list" id="items-list"></div>
+
+  <div class="scroll-pad"></div>
+  <button class="fab" id="fab-add"><span class="fab-icon"></span>Добавить товар</button>
+</div>
+
+<div id="s-camera" class="screen">
+  <div class="camera-topbar">
+    <button class="cam-back" id="cam-back-btn">✕</button>
+    <div class="cam-title">AI Камера Gemini</div>
+    <div style="width:36px"></div>
+  </div>
+  <div class="camera-window">
+    <div class="cam-stage" id="cam-live">
+      <div class="scan-frame"></div>
+      <div class="scan-line"></div>
+      <div class="demo-product">
+        <div class="dp-brand">EVA</div>
+        <div class="dp-name">Toilet Paper</div>
+        <div class="dp-count">12</div>
+        <div class="dp-unit">рулонов • 3 слоя</div>
+      </div>
+    </div>
+    <div class="cam-stage" id="cam-captured">
+      <img id="cam-img" alt="">
+      <div class="scan-frame"></div>
+      <div class="scan-line" id="cap-scan-line" style="display:none"></div>
+      <div class="analyzing-badge" id="analyzing-badge"><div class="analyzing-dot"></div>Анализирую…</div>
+      <div class="result-overlay" id="result-overlay">
+        <div class="result-card">
+          <div class="result-icon" id="res-icon"></div>
+          <div class="result-main">
+            <div class="result-name-big" id="res-name">EVA</div>
+            <div class="result-sub" id="res-sub">Туалетная бумага · 12 шт</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div style="padding:0 20px 10px;color:rgba(255,255,255,.6);font-size:12px">Для AI нужен запущенный backend на ноутбуке.</div><div class="camera-controls">
+    <div class="ctrl-row">
+      <label class="ctrl-btn">📷 Камера<input type="file" id="inp-camera" accept="image/*" capture="environment"></label>
+      <label class="ctrl-btn">🖼 Галерея<input type="file" id="inp-gallery" accept="image/*"></label>
+    </div>
+    <div class="ctrl-row">
+      <button class="ctrl-btn" id="cam-reset-btn" style="display:none">Сбросить</button>
+      <button class="ctrl-btn primary" id="cam-recognize-btn" style="display:none">Распознать</button>
+    </div>
+  </div>
+</div>
+
+<div id="s-confirm" class="screen">
+  <div class="confirm-header safe-top">
+    <button class="back-btn" id="conf-back-btn">←</button>
+    <div class="confirm-title">Подтвердить AI</div>
+  </div>
+  <div class="confirm-photo" id="conf-photo"></div>
+  <div class="confirm-fields">
+    <div class="field-group">
+      <div class="field-row"><div class="field-label">Место</div><div class="field-val" id="conf-place">Ванная</div></div>
+      <div class="field-row"><div class="field-label">Продукт</div><div class="field-val" id="conf-product">—</div></div>
+      <div class="field-row"><div class="field-label">Бренд</div><div class="field-val" id="conf-brand">—</div></div>
+      <div class="field-row"><div class="field-label">Описание</div><div class="field-val" id="conf-extra">—</div></div>
+      <div class="field-row"><div class="field-label">В упаковке</div><div class="field-val" id="conf-total">—</div></div>
+    </div>
+    <div class="qty-section">
+      <div class="qty-label">Сколько осталось сейчас?</div>
+      <div class="qty-control">
+        <button class="qty-btn" id="qty-minus">−</button>
+        <div class="qty-display">
+          <div class="qty-num" id="qty-val">8</div>
+          <div class="qty-of" id="qty-of-label">из 12 шт</div>
+        </div>
+        <button class="qty-btn" id="qty-plus">+</button>
+      </div>
+    </div>
+  </div>
+  <button type="button" class="confirm-save-btn" id="conf-save-btn">Сохранить в запасы</button>
+  <div class="scroll-pad"></div>
+</div>
+
+<div id="s-detail" class="screen">
+  <div class="detail-header safe-top">
+    <button class="back-btn" id="detail-back-btn">←</button>
+    <div class="confirm-title" id="detail-title-bar">Товар</div>
+  </div>
+  <div class="detail-photo" id="detail-photo"></div>
+  <div class="detail-main">
+    <div class="detail-name" id="detail-name">—</div>
+    <div class="detail-meta" id="detail-meta">—</div>
+    <div class="detail-desc" id="detail-desc">—</div>
+    <div class="prog-section">
+      <div class="prog-header">
+        <div class="prog-title">Остаток</div>
+        <div><span class="prog-num" id="det-qty">0</span><span class="prog-unit" id="det-unit">шт</span></div>
+      </div>
+      <div class="prog-bar-bg"><div class="prog-bar-fill" id="det-bar"></div></div>
+      <div class="prog-footer">
+        <div class="prog-days" id="det-days">—</div>
+        <div class="prog-status" id="det-status">—</div>
+      </div>
+      <div style="margin-top:12px">
+        <div class="prog-title" style="margin-bottom:8px">Расход в день</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="filter-chip" id="rate-01" style="border:none;background:var(--surface2);padding:10px 14px;border-radius:999px;font:600 13px DM Sans,sans-serif;cursor:pointer">0.1</button>
+          <button class="filter-chip" id="rate-03" style="border:none;background:var(--surface2);padding:10px 14px;border-radius:999px;font:600 13px DM Sans,sans-serif;cursor:pointer">0.3</button>
+          <button class="filter-chip" id="rate-05" style="border:none;background:var(--surface2);padding:10px 14px;border-radius:999px;font:600 13px DM Sans,sans-serif;cursor:pointer">0.5</button>
+          <button class="filter-chip" id="rate-10" style="border:none;background:var(--surface2);padding:10px 14px;border-radius:999px;font:600 13px DM Sans,sans-serif;cursor:pointer">1.0</button>
+        </div>
+        <div style="margin-top:8px;color:var(--text2);font-size:12px" id="det-rate-label">Текущий расход: 0.4 / день</div>
+      </div>
+    </div>
+    <div class="action-grid">
+      <button class="action-btn" id="det-fav-btn" style="display:none">Favorite<span>Fast access on top</span></button>
+      <button class="action-btn" id="det-use-btn">Использовал<span>−1 единица</span></button>
+      <button class="action-btn" id="det-edit-btn">Редактировать<span>Изменить данные</span></button>
+      <button class="action-btn buy" id="det-buy-btn">Купил<span>Полный запас</span></button>
+      <button class="action-btn" id="det-del-btn" style="grid-column:1 / -1">Удалить товар<span>Убрать из списка</span></button>
+    </div>
+    <div class="qty-section" style="margin-bottom:16px">
+      <div class="qty-label">Изменить остаток вручную</div>
+      <div class="qty-control">
+        <button class="qty-btn" id="det-minus3">−3</button>
+        <button class="qty-btn" id="det-minus1">−1</button>
+        <div class="qty-display"><div class="qty-num" id="det-current-big">0</div><div class="qty-of" id="det-current-of">из 0 шт</div></div>
+        <button class="qty-btn" id="det-plus1">+1</button>
+        <button class="qty-btn" id="det-plus3">+3</button>
+      </div>
+    </div>
+    <div class="history-section">
+      <div class="history-title">История</div>
+      <div class="history-list" id="det-history"></div>
+    </div>
+  </div>
+  <div class="scroll-pad"></div>
+</div>
+
+
+<div id="s-manual" class="screen">
+  <div class="confirm-header safe-top">
+    <button class="back-btn" id="manual-back-btn">←</button>
+    <div class="confirm-title" id="manual-title">Добавить вручную</div>
+  </div>
+  <div class="confirm-fields">
+    <div class="confirm-photo" id="manual-photo-box" style="height:170px;margin:0 0 10px;background:var(--surface)"><div class="confirm-photo-placeholder">Фото товара</div></div>
+    <label for="manual-photo-input" style="margin:0 20px 10px;display:block;text-align:center;background:var(--surface);border:1px solid var(--border);padding:14px;border-radius:16px;font:600 14px DM Sans,sans-serif;cursor:pointer">Добавить фото</label>
+    <input id="manual-photo-input" type="file" accept="image/*" style="display:none">
+    <div class="field-group" style="padding:14px 16px;display:flex;flex-direction:column;gap:12px">
+      <div>
+        <div class="field-label" style="margin-bottom:6px">Продукт</div>
+        <input id="manual-product" type="text" placeholder="Например: Туалетная бумага" style="width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);font:500 15px DM Sans,sans-serif;color:var(--text)">
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:6px">Бренд</div>
+        <input id="manual-brand" type="text" placeholder="Например: Eva" style="width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);font:500 15px DM Sans,sans-serif;color:var(--text)">
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:6px">Место</div>
+        <input id="manual-place" type="text" placeholder="Например: Ванная" style="width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);font:500 15px DM Sans,sans-serif;color:var(--text)">
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:6px">Описание</div>
+        <input id="manual-extra" type="text" placeholder="Например: 3 слоя · Белая бумага" style="width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);font:500 15px DM Sans,sans-serif;color:var(--text)">
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:6px">Всего в упаковке</div>
+        <input id="manual-total" type="number" min="1" step="1" placeholder="12" style="width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);font:500 15px DM Sans,sans-serif;color:var(--text)">
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:6px">Сейчас осталось</div>
+        <input id="manual-current" type="number" min="0" step="1" placeholder="8" style="width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);font:500 15px DM Sans,sans-serif;color:var(--text)">
+      </div>
+      <div>
+        <div class="field-label" style="margin-bottom:6px">Расход в день</div>
+        <input id="manual-daily-rate" type="number" min="0" step="0.1" placeholder="0.4" style="width:100%;padding:14px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface2);font:500 15px DM Sans,sans-serif;color:var(--text)">
+      </div>
+    </div>
+  </div>
+  <button type="button" class="confirm-save-btn" id="manual-save-btn">Сохранить</button>
+  <div class="scroll-pad"></div>
+</div>
+
+
+<div id="s-shopping" class="screen">
+  <div class="detail-header safe-top">
+    <button class="back-btn" id="shopping-back-btn">←</button>
+    <div class="confirm-title">Список покупок</div>
+  </div>
+  <div style="padding:0 20px 8px;color:var(--text2);font-size:13px">Здесь товары, которые скоро закончатся или уже заканчиваются.</div>
+  <div class="items-list" id="shopping-list"></div>
+  <div class="scroll-pad"></div>
+</div>
+
+<div id="s-categories" class="screen">
+  <div class="detail-header safe-top">
+    <div class="confirm-title">Категории</div>
+  </div>
+  <div class="toolbar-card">
+    <div class="toolbar-grid">
+      <input id="cat-search-input" class="search-input" type="search" placeholder="Поиск по товарам, брендам, описанию">
+      <select id="cat-sort-select" class="sort-select">
+        <option value="status">Сначала важное</option>
+        <option value="name">По названию</option>
+        <option value="qty">По остатку</option>
+        <option value="date">По дате добавления</option>
+      </select>
+    </div>
+  </div>
+  <div class="category-row" id="cat-category-bar"></div>
+  <div class="filter-row" id="cat-filter-bar">
+    <button class="filter-chip active" data-filter="all">Все</button>
+    <button class="filter-chip" data-filter="warn">Скоро</button>
+    <button class="filter-chip" data-filter="urgent">Срочно</button>
+  </div>
+  <div class="items-list category-screen-list" id="category-items-list"></div>
+  <div class="scroll-pad"></div>
+</div>
+
+<div id="s-analytics" class="screen">
+  <div class="detail-header safe-top">
+    <div class="confirm-title">Аналитика</div>
+  </div>
+  <div class="analytics-card">
+    <div class="analytics-label">Обзор</div>
+    <div class="stats-grid">
+      <div class="summary-card"><div class="analytics-big" id="an-total">0</div><div class="sc-label">Всего</div></div>
+      <div class="summary-card"><div class="analytics-big" id="an-favorites">0</div><div class="sc-label">Избранное</div></div>
+      <div class="summary-card"><div class="analytics-big" id="an-buy">0</div><div class="sc-label">Купить</div></div>
+      <div class="summary-card"><div class="analytics-big" id="an-fast">0</div><div class="sc-label">Скоро закончатся</div></div>
+    </div>
+  </div>
+  <div class="analytics-card">
+    <div class="analytics-label">Категории</div>
+    <div id="analytics-categories" class="mini-list"></div>
+  </div>
+  <div class="analytics-card">
+    <div class="analytics-label">Быстрее всего заканчиваются</div>
+    <div id="analytics-fast-list" class="mini-list"></div>
+  </div>
+  <div class="scroll-pad"></div>
+</div>
+
+<div id="s-settings" class="screen">
+  <div class="detail-header safe-top">
+    <div class="confirm-title">Настройки</div>
+  </div>
+  <div class="settings-card">
+    <div class="analytics-label">Шаблоны</div>
+    <div class="template-actions">
+      <button class="small-btn primary" id="save-template-btn">Сохранить текущий товар как шаблон</button>
+      <button class="small-btn secondary" id="install-btn">Установить на экран</button>
+    </div>
+    <div id="template-list" class="mini-list"></div>
+  </div>
+  <div class="settings-card">
+    <div class="analytics-label">PWA режим</div>
+    <div class="network-main">Добавь приложение на главный экран телефона и открывай его почти как нативное.</div>
+  </div>
+  <div class="settings-card">
+    <div class="analytics-label">Подсказки</div>
+    <div class="mini-list">
+      <div class="mini-item"><span>Совместный список</span><strong>Через сервер</strong></div>
+      <div class="mini-item"><span>Редактор с телефона</span><strong>/editor</strong></div>
+      <div class="mini-item"><span>Скачать версии</span><strong>В редакторе</strong></div>
+    </div>
+  </div>
+  <div class="scroll-pad"></div>
+</div>
+
+<div class="toast" id="toast"></div>
+<div class="bottom-nav" id="bottom-nav">
+  <button class="nav-btn active" data-tab="home"><span class="nav-ico">⌂</span><span>Запасы</span></button>
+  <button class="nav-btn" data-tab="shopping"><span class="nav-ico">✓</span><span>Покупки</span></button>
+  <button class="nav-btn" data-tab="analytics"><span class="nav-ico">◔</span><span>Аналитика</span></button>
+  <button class="nav-btn" data-tab="settings"><span class="nav-ico">⚙</span><span>Настройки</span></button>
+</div>
+</div>
+
+<script>
+
+const GEMINI_BACKEND_URL = '/recognize'
+const PRODUCT_IMAGE_API_URL = '/api/product-image'
+const STATE_API_URL = '/api/state'
+const INFO_API_URL = '/api/info'
+let items = []
+const ITEMS_KEY = 'hs_items_stable'
+const PHOTOS_KEY = 'hs_item_photos_v1'
+
+function loadJSON(key, fallback){
+  try{
+    const raw = localStorage.getItem(key)
+    return raw ? JSON.parse(raw) : fallback
+  }catch(e){
+    return fallback
+  }
+}
+function saveJSON(key, value){
+  localStorage.setItem(key, JSON.stringify(value))
+}
+function cloneStateSnapshot(){
+  return {
+    items: JSON.parse(JSON.stringify(items || [])),
+    photos: JSON.parse(JSON.stringify(getPhotosMap() || {})),
+    shoppingChecked: JSON.parse(JSON.stringify(shoppingChecked || {})),
+    shoppingForced: JSON.parse(JSON.stringify(shoppingForced || {})),
+    currentItemId
+  }
+}
+function pushUndoState(label){
+  undoStack.push({label, snapshot: cloneStateSnapshot()})
+  if(undoStack.length > 10) undoStack = undoStack.slice(-10)
+}
+async function undoLastAction(){
+  const prev = undoStack.pop()
+  if(!prev){
+    showToast('Больше нечего отменять')
+    return
+  }
+  items = prev.snapshot.items || []
+  photosCache = prev.snapshot.photos || {}
+  shoppingChecked = prev.snapshot.shoppingChecked || {}
+  shoppingForced = prev.snapshot.shoppingForced || {}
+  currentItemId = prev.snapshot.currentItemId || null
+  saveJSON(ITEMS_KEY, items)
+  saveJSON(PHOTOS_KEY, photosCache)
+  saveJSON(SHOPPING_CHECKED_KEY, shoppingChecked)
+  saveJSON(SHOPPING_FORCED_KEY, shoppingForced)
+  renderCategoryChips()
+  renderAnalytics()
+  await syncStateToServer()
+  scheduleRenderHome()
+  goTo('home')
+  showToast('Отменено: ' + prev.label)
+}
+let photosCache = null
+let serverLoadDone = false
+
+function getPhotosMap(){
+  if(photosCache) return photosCache
+  photosCache = loadJSON(PHOTOS_KEY, {})
+  return photosCache
+}
+function savePhotosMap(map){
+  photosCache = map
+  saveJSON(PHOTOS_KEY, map)
+}
+async function loadServerState(){
+  try{
+    const r = await fetch(STATE_API_URL, {cache:'no-store'})
+    if(!r.ok) throw new Error('state load failed')
+    const data = await r.json()
+    items = Array.isArray(data.items) ? data.items : []
+    photosCache = data && typeof data.photos === 'object' && data.photos ? data.photos : {}
+    saveJSON(ITEMS_KEY, items)
+    saveJSON(PHOTOS_KEY, photosCache)
+    normalizeItems()
+    renderCategoryChips()
+    renderCategoriesScreen()
+    renderAnalytics()
+    scheduleRenderHome()
+    setTimeout(() => migrateExistingThumbnails().catch(() => {}), 300)
+  }catch(e){
+    console.warn('State sync load failed', e)
+  }finally{
+    serverLoadDone = true
+  }
+}
+async function syncStateToServer(){
+  try{
+    const r = await fetch(STATE_API_URL, {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ items, photos: getPhotosMap() })
+    })
+    return r.ok
+  }catch(e){
+    console.warn('State sync save failed', e)
+    return false
+  }
+}
+async function loadServerInfo(){
+  const statusEl = document.getElementById('network-status')
+  const urlEl = document.getElementById('network-url')
+  if(!statusEl || !urlEl) return
+
+  try{
+    const r = await fetch(INFO_API_URL, {cache:'no-store'})
+    if(!r.ok) throw new Error('info load failed')
+    const data = await r.json()
+    const urls = Array.isArray(data.urls) ? data.urls : []
+    const phoneUrl = urls.find(url => !url.includes('127.0.0.1')) || urls[0] || window.location.origin
+    statusEl.textContent = data.key_set
+      ? 'Gemini подключен. Эту ссылку можно открыть на телефоне в той же Wi‑Fi сети.'
+      : 'Сайт работает. Для AI-распознавания осталось задать GEMINI_API_KEY и перезапустить сервер.'
+    urlEl.innerHTML = '<strong>Телефон:</strong> ' + phoneUrl
+  }catch(e){
+    statusEl.textContent = 'Сервер работает, но адрес для телефона не удалось определить автоматически.'
+    urlEl.textContent = window.location.origin
+  }
+}
+function stripPhotosFromItems(list){
+  return list.map(item => {
+    const copy = {...item}
+      if(copy.generated_image && String(copy.generated_image).startsWith('data:')){
+        const gid = copy.generatedImageId || copy.photoId || ('p_' + copy.id)
+        const photos = getPhotosMap()
+        photos[gid] = copy.generated_image
+        savePhotosMap(photos)
+        copy.generatedImageId = gid
+        copy.photoId = copy.photoId || gid
+        copy.generated_image = ''
+      }
+      if(copy.thumb && String(copy.thumb).startsWith('data:')){
+        const tid = copy.thumbId || ('t_' + copy.id)
+        const photos = getPhotosMap()
+        photos[tid] = copy.thumb
+        savePhotosMap(photos)
+        copy.thumbId = tid
+        copy.thumb = ''
+      }
+      if(copy.original_image && String(copy.original_image).startsWith('data:')){
+        const oid = copy.originalImageId || copy.originalPhotoId || ('op_' + copy.id)
+        const photos = getPhotosMap()
+        photos[oid] = copy.original_image
+        savePhotosMap(photos)
+        copy.originalImageId = oid
+        copy.originalPhotoId = copy.originalPhotoId || oid
+        copy.original_image = ''
+      }
+      if(copy.photo && String(copy.photo).startsWith('data:')){
+        const pid = copy.photoId || ('p_' + copy.id)
+        const photos = getPhotosMap()
+        photos[pid] = copy.photo
+        savePhotosMap(photos)
+        copy.photoId = pid
+        copy.photo = ''
+      }
+      if(copy.originalPhoto && String(copy.originalPhoto).startsWith('data:')){
+        const opid = copy.originalPhotoId || ('op_' + copy.id)
+        const photos = getPhotosMap()
+        photos[opid] = copy.originalPhoto
+        savePhotosMap(photos)
+        copy.originalPhotoId = opid
+        copy.originalPhoto = ''
+      }
+      return copy
+  })
+}
+function normalizeItems(){
+  items = (items || []).map(i => ({
+    ...i,
+    title: String(i.title || i.product || '').trim(),
+    dailyRate: Number(i.dailyRate ?? 0.4),
+    usageRateGuess: Number(i.usageRateGuess ?? i.usage_rate_guess ?? i.dailyRate ?? 0.4),
+    smartDailyRate: Number(i.smartDailyRate ?? i.dailyRate ?? i.usageRateGuess ?? 0.4),
+    usageConfidence: i.usageConfidence || 'AI оценка',
+    favorite: Boolean(i.favorite),
+    category: String(i.category || inferCategory(i)).trim(),
+    created_at: i.created_at || (i.createdAt ? new Date(Number(i.createdAt)).toISOString() : new Date().toISOString()),
+    createdAt: Number(i.createdAt || Number(i.id) || Date.now())
+  })).map(i => {
+    recalculateSmartUsage(i)
+    return i
+  })
+}
+
+function attachPhoto(item){
+  if(item.generated_image) return item.generated_image
+  if(item.generatedImageId){
+    const photos = getPhotosMap()
+    return photos[item.generatedImageId] || ''
+  }
+  if(item.photo) return item.photo
+  if(item.photoId){
+    const photos = getPhotosMap()
+    return photos[item.photoId] || ''
+  }
+  return ''
+}
+function attachThumb(item){
+  if(item.thumb) return item.thumb
+  if(item.thumbId){
+    const photos = getPhotosMap()
+    return photos[item.thumbId] || ''
+  }
+  return attachPhoto(item)
+}
+function attachOriginalPhoto(item){
+  if(item.original_image) return item.original_image
+  if(item.originalImageId){
+    const photos = getPhotosMap()
+    return photos[item.originalImageId] || ''
+  }
+  if(item.originalPhoto) return item.originalPhoto
+  if(item.originalPhotoId){
+    const photos = getPhotosMap()
+    return photos[item.originalPhotoId] || ''
+  }
+  return ''
+}
+function escapeSvgText(value){
+  return String(value || '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[ch]))
+}
+function makeProductCardImage(item){
+  const product = escapeSvgText(item.product || 'Продукт')
+  const brand = escapeSvgText(item.brand || 'HomeStock')
+  const category = escapeSvgText(item.category || item.place || 'Дом')
+  const seed = (String(item.product || '') + String(item.brand || '')).split('').reduce((sum,ch) => sum + ch.charCodeAt(0), 0)
+  const palettes = [
+    ['#1f1711','#df8a45','#f8efe3'],
+    ['#12332b','#77b28c','#f4f0df'],
+    ['#2b2436','#c9a6ff','#f4efff'],
+    ['#2b2118','#d2a679','#fff3e2'],
+    ['#162536','#7db7d8','#eef8ff']
+  ]
+  const p = palettes[seed % palettes.length]
+  const initials = escapeSvgText(String(item.brand || item.product || 'HS').slice(0,2).toUpperCase())
+  const original = item.original_image || item.originalPhoto || item.originalPhotoData || item.sourcePhoto || ''
+  const productVisual = original
+    ? `<image href="${escapeSvgText(original)}" x="240" y="82" width="420" height="420" preserveAspectRatio="xMidYMid meet"/>`
+    : `<circle cx="450" cy="250" r="94" fill="${p[0]}"/><text x="450" y="282" text-anchor="middle" font-family="Arial, sans-serif" font-size="76" font-weight="800" fill="#fff">${initials}</text>`
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620">
+    <defs>
+      <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1"><stop offset="0" stop-color="${p[2]}"/><stop offset=".58" stop-color="#ffffff"/><stop offset="1" stop-color="${p[1]}" stop-opacity=".32"/></linearGradient>
+      <radialGradient id="glow" cx=".78" cy=".18" r=".62"><stop stop-color="${p[1]}" stop-opacity=".55"/><stop offset="1" stop-color="${p[1]}" stop-opacity="0"/></radialGradient>
+      <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%"><feDropShadow dx="0" dy="24" stdDeviation="24" flood-color="${p[0]}" flood-opacity=".20"/></filter>
+    </defs>
+    <rect width="900" height="620" rx="64" fill="url(#bg)"/>
+    <rect width="900" height="620" rx="64" fill="url(#glow)"/>
+    <circle cx="760" cy="80" r="180" fill="${p[1]}" opacity=".18"/>
+    <circle cx="120" cy="560" r="220" fill="#fff" opacity=".58"/>
+    <g filter="url(#shadow)">
+      <rect x="256" y="98" width="388" height="424" rx="54" fill="#fff" opacity=".88"/>
+      <rect x="294" y="138" width="312" height="344" rx="42" fill="${p[2]}" opacity=".88"/>
+      ${productVisual}
+    </g>
+    <text x="72" y="92" font-family="Arial, sans-serif" font-size="24" font-weight="800" letter-spacing="8" fill="${p[0]}" opacity=".50">${category}</text>
+    <text x="72" y="484" font-family="Arial, sans-serif" font-size="42" font-weight="800" fill="${p[0]}">${brand}</text>
+    <text x="72" y="538" font-family="Arial, sans-serif" font-size="54" font-weight="900" fill="${p[0]}">${product}</text>
+  </svg>`
+  return 'data:image/svg+xml;charset=utf-8,' + encodeURIComponent(svg)
+}
+function compressImageDataUrl(dataUrl, maxW=900, quality=0.72){
+  return new Promise((resolve) => {
+    if(!dataUrl || !String(dataUrl).startsWith('data:')) return resolve(dataUrl || '')
+    const img = new Image()
+    img.onload = () => {
+      let w = img.width, h = img.height
+      if(w > maxW){
+        h = Math.round(h * (maxW / w))
+        w = maxW
+      }
+      const c = document.createElement('canvas')
+      c.width = w
+      c.height = h
+      const ctx = c.getContext('2d')
+      ctx.drawImage(img, 0, 0, w, h)
+      resolve(c.toDataURL('image/jpeg', quality))
+    }
+    img.onerror = () => resolve(dataUrl)
+    img.src = dataUrl
+  })
+}
+async function makeThumbDataUrl(dataUrl){
+  return compressImageDataUrl(dataUrl, 180, 0.58)
+}
+function getConfirmDraftFromInputs(){
+  const get = id => document.getElementById(id)?.value?.trim()
+  if(!pendingDraft) return null
+  pendingDraft = {
+    ...pendingDraft,
+    place: get('conf-place-input') || pendingDraft.place || 'Дом',
+    product: get('conf-product-input') || pendingDraft.product || 'Товар',
+    brand: get('conf-brand-input') || pendingDraft.brand || 'Без бренда',
+    extra: get('conf-extra-input') || pendingDraft.extra || '',
+    total: Math.max(1, Math.round(Number(get('conf-total-input') || pendingDraft.total || 1))),
+    promptHint: get('conf-prompt-hint') || ''
+  }
+  qtyMax = pendingDraft.total
+  updateQtyDisplay()
+  return pendingDraft
+}
+function dataUrlToBlob(dataUrl){
+  const parts = String(dataUrl || '').split(',')
+  const meta = parts[0] || ''
+  const mime = (meta.match(/data:(.*?);base64/) || [])[1] || 'image/jpeg'
+  const raw = atob(parts[1] || '')
+  const bytes = new Uint8Array(raw.length)
+  for(let i = 0; i < raw.length; i++) bytes[i] = raw.charCodeAt(i)
+  return new Blob([bytes], {type:mime})
+}
+async function generateProductImages(originalDataUrl, draft){
+  if(!originalDataUrl || !String(originalDataUrl).startsWith('data:')){
+    throw new Error('Нет исходного фото для генерации')
+  }
+  try{
+    const fd = new FormData()
+    fd.append('file', dataUrlToBlob(originalDataUrl), 'original-product-photo.jpg')
+    fd.append('title', draft.product || draft.title || 'Product')
+    fd.append('brand', draft.brand || '')
+    fd.append('category', draft.category || draft.place || '')
+    fd.append('prompt_hint', draft.promptHint || '')
+    const r = await fetch(PRODUCT_IMAGE_API_URL, {method:'POST', body:fd})
+    const data = await r.json()
+    if(!r.ok || data.ok === false){
+      const msg = data.hint || data.error || 'AI image generation failed'
+      const err = new Error(msg)
+      err.code = data.code || 'IMAGE_GENERATION_FAILED'
+      throw err
+    }
+    if(!data.generated_image){
+      throw new Error('AI не вернул сгенерированное фото')
+    }
+    if(data.source === 'pollinations_image') showToast('AI-фото сгенерировано бесплатно')
+    return {
+      id: data.id || '',
+      title: data.title || draft.product || '',
+      generated_image: data.generated_image,
+      original_image: data.original_image || originalDataUrl,
+      created_at: data.created_at || new Date().toISOString(),
+      source: data.source || 'backend'
+    }
+  }catch(e){
+    console.warn('Product image generation failed', e)
+    throw e
+  }
+}
+function updateConfirmGenerationUI(){
+  const saveBtn = document.getElementById('conf-save-btn')
+  const photoEl = document.getElementById('conf-photo')
+  if(!saveBtn || !photoEl) return
+  if(pendingImagePair && pendingImagePair.generated_image){
+    photoEl.innerHTML = '<img src="'+pendingImagePair.generated_image+'" alt=""><div class="original-photo-card"><div class="original-photo-title">Исходное фото камеры</div><img src="'+pendingCompressedPhoto+'" alt=""></div>'
+    saveBtn.disabled = false
+    saveBtn.style.opacity = '1'
+    saveBtn.textContent = 'Сохранить в запасы'
+    return
+  }
+  if(pendingImageError){
+    photoEl.innerHTML = pendingPhoto ? '<img src="'+pendingPhoto+'" alt=""><div class="original-photo-card"><div class="original-photo-title">AI фото не готово</div><div class="empty-sub">'+pendingImageError+'</div></div>' : '<div class="confirm-photo-placeholder">AI фото не готово</div>'
+    saveBtn.disabled = true
+    saveBtn.style.opacity = '.55'
+    saveBtn.textContent = 'Сначала нужно AI фото'
+    return
+  }
+  photoEl.innerHTML = pendingPhoto ? '<img src="'+pendingPhoto+'" alt=""><div class="original-photo-card"><div class="original-photo-title">Генерирую AI фото...</div><div class="empty-sub">Можно проверить данные ниже. Сохранение включится, когда фото будет готово.</div></div>' : '<div class="confirm-photo-placeholder">Генерирую AI фото...</div>'
+  saveBtn.disabled = true
+  saveBtn.style.opacity = '.55'
+  saveBtn.textContent = 'Генерирую фото...'
+}
+async function startConfirmImageGeneration(){
+  const runId = ++pendingImageRunId
+  pendingImagePair = null
+  pendingImageError = null
+  pendingImagePromise = null
+  pendingCompressedPhoto = pendingPhoto || ''
+  updateConfirmGenerationUI()
+  try{
+    if(pendingCompressedPhoto && String(pendingCompressedPhoto).startsWith('data:')){
+      pendingCompressedPhoto = await compressImageDataUrl(pendingCompressedPhoto, 680, 0.62)
+    }
+    if(runId !== pendingImageRunId) return
+    pendingImagePromise = generateProductImages(pendingCompressedPhoto, pendingDraft)
+    const result = await pendingImagePromise
+    if(runId !== pendingImageRunId) return
+    pendingImagePair = result
+    pendingImageError = null
+    updateConfirmGenerationUI()
+    showToast('AI фото готово')
+  }catch(e){
+    if(runId !== pendingImageRunId) return
+    pendingImagePair = null
+    pendingImageError = e && e.message ? e.message : 'Не удалось сгенерировать фото'
+    updateConfirmGenerationUI()
+  }finally{
+    if(runId === pendingImageRunId) pendingImagePromise = null
+  }
+}
+async function saveItems(){
+  try {
+    const normalized = stripPhotosFromItems(items)
+    items = normalized
+    saveJSON(ITEMS_KEY, normalized)
+    renderCategoryChips()
+    renderCategoriesScreen()
+    renderAnalytics()
+    await syncStateToServer()
+    return true
+  } catch(e) {
+    try{
+      // emergency cleanup of orphan photos if quota hit
+      const usedIds = new Set((items || []).flatMap(i => [i.photoId, i.generatedImageId, i.thumbId, i.originalPhotoId, i.originalImageId]).filter(Boolean))
+      const photos = getPhotosMap()
+      Object.keys(photos).forEach(k => { if(!usedIds.has(k)) delete photos[k] })
+      savePhotosMap(photos)
+      const normalized = stripPhotosFromItems(items)
+      items = normalized
+      saveJSON(ITEMS_KEY, normalized)
+      renderCategoryChips()
+      renderCategoriesScreen()
+      renderAnalytics()
+      await syncStateToServer()
+      return true
+    }catch(e2){
+      alert('Ошибка сохранения: память браузера переполнена. Удалите часть товаров с фото или очистите старые данные.')
+      return false
+    }
+  }
+}
+
+items = loadJSON(ITEMS_KEY, [])
+let pendingDraft = null
+let pendingPhoto = ''
+let pendingCompressedPhoto = ''
+let pendingImagePair = null
+let pendingImagePromise = null
+let pendingImageError = null
+let pendingImageRunId = 0
+let photoData = ''
+let photoLoaded = false
+let qtyVal = 8
+let qtyMax = 12
+let currentItemId = null
+let toastTimer = null
+let editingItemId = null
+let activeFilter = 'all'
+let manualPhotoData = ''
+let searchQuery = ''
+let sortMode = 'status'
+let activeCategory = 'all'
+let categorySearchQuery = ''
+let categorySortMode = 'status'
+let categoryActiveCategory = 'all'
+let categoryFilter = 'all'
+let stockSelectionMode = false
+let selectedStockIds = {}
+let installPromptEvent = null
+const TEMPLATE_KEY = 'hs_templates_v1'
+const SHOPPING_CHECKED_KEY = 'hs_shopping_checked_v1'
+const SHOPPING_FORCED_KEY = 'hs_shopping_forced_v2'
+const SHOPPING_HIDE_CHECKED_KEY = 'hs_shopping_hide_checked_v2'
+let templates = loadJSON(TEMPLATE_KEY, [])
+let shoppingChecked = loadJSON(SHOPPING_CHECKED_KEY, {})
+let shoppingForced = loadJSON(SHOPPING_FORCED_KEY, {})
+let shoppingHideChecked = loadJSON(SHOPPING_HIDE_CHECKED_KEY, false)
+let undoStack = []
+
+if(items.length === 1 && items[0] && items[0].brand === 'Eva' && items[0].total === 12 && items[0].current === 8){
+  items = []
+  try { saveJSON(ITEMS_KEY, items) } catch(e) {}
+}
+
+if(false && (!Array.isArray(items) || !items.length)){
+  items = [{
+    id: String(Date.now()),
+    place: 'Ванная',
+    product: 'Туалетная бумага',
+    brand: 'Eva',
+    extra: '3 слоя · Белая бумага',
+    total: 12,
+    current: 8,
+    photo: '',
+    dailyRate: 0.4,
+    history: [{type:'created', qty:8, ts:Date.now()}]
+  }]
+  try { saveJSON(ITEMS_KEY, items) } catch(e) {}
+}
+
+const screens = {
+  home: document.getElementById('s-home'),
+  camera: document.getElementById('s-camera'),
+  confirm: document.getElementById('s-confirm'),
+  detail: document.getElementById('s-detail'),
+  manual: document.getElementById('s-manual'),
+  shopping: document.getElementById('s-shopping'),
+  categories: document.getElementById('s-categories'),
+  analytics: document.getElementById('s-analytics'),
+  settings: document.getElementById('s-settings')
+}
+
+function persistItemsLegacy(){
+  try {
+    localStorage.setItem('hs_items_stable', JSON.stringify(items))
+    return true
+  } catch(e) {
+    alert('Ошибка сохранения: ' + e.message)
+    return false
+  }
+}
+function goTo(name){
+  Object.keys(screens).forEach(k => screens[k].classList.toggle('active', k === name))
+  const showNav = ['home','shopping','categories','analytics','settings'].includes(name)
+  document.getElementById('bottom-nav').style.display = showNav ? 'grid' : 'none'
+  const shell = document.querySelector('.shell')
+  if(shell) shell.classList.toggle('camera-open', !showNav)
+  if(showNav) updateBottomNav(name)
+  if(name === 'categories') renderCategoriesScreen()
+  if(name === 'analytics') renderAnalytics()
+  if(name === 'settings') renderTemplates()
+}
+function showToast(msg){
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.classList.add('show')
+  if(toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2200)
+}
+function getStatus(item){
+  const pct = item.total ? item.current / item.total : 0
+  if (pct <= 0.15) return 'urgent'
+  if (pct <= 0.30) return 'warn'
+  return 'ok'
+}
+function getBaseUsageGuess(item){
+  const text = [item.product, item.brand, item.category, item.place, item.extra].join(' ').toLowerCase()
+  if(Number(item.usageRateGuess) > 0) return Number(item.usageRateGuess)
+  if(text.includes('туалет') || text.includes('бумаг') || text.includes('toilet')) return 0.35
+  if(text.includes('мыло') || text.includes('soap')) return 0.05
+  if(text.includes('шампун') || text.includes('гель') || text.includes('spray') || text.includes('спрей')) return 0.04
+  if(text.includes('кофе') || text.includes('чай') || text.includes('rice') || text.includes('рис')) return 0.08
+  if(text.includes('порош') || text.includes('clean') || text.includes('уборк')) return 0.03
+  if(text.includes('батар') || text.includes('кабель') || text.includes('ламп')) return 0.01
+  return Number(item.dailyRate || 0.4) || 0.4
+}
+function calculateObservedDailyRate(item){
+  const history = Array.isArray(item.history) ? item.history.filter(h => h && h.ts) : []
+  if(history.length < 2) return null
+  const sorted = [...history].sort((a,b) => Number(a.ts || 0) - Number(b.ts || 0))
+  const first = sorted[0]
+  const last = sorted[sorted.length - 1]
+  const days = Math.max(1, (Number(last.ts) - Number(first.ts)) / 86400000)
+  const used = sorted.reduce((sum,h) => sum + (h.type === 'used' ? Number(h.qty || 0) : 0), 0)
+  if(used <= 0) return null
+  return Math.max(0.01, used / days)
+}
+function recalculateSmartUsage(item){
+  const guess = getBaseUsageGuess(item)
+  const observed = calculateObservedDailyRate(item)
+  const historyCount = Array.isArray(item.history) ? item.history.length : 0
+  let rate = guess
+  let confidence = 'AI оценка'
+  if(observed){
+    const observedWeight = Math.min(0.85, Math.max(0.35, historyCount / 12))
+    rate = observed * observedWeight + guess * (1 - observedWeight)
+    confidence = historyCount >= 8 ? 'по твоей истории' : 'AI + твоя история'
+  }
+  item.usageRateGuess = guess
+  item.smartDailyRate = Math.max(0.01, Number(rate.toFixed(3)))
+  item.usageConfidence = confidence
+  item.dailyRate = item.smartDailyRate
+  return item.smartDailyRate
+}
+function smartUsageText(item){
+  const rate = Number(item.smartDailyRate || item.dailyRate || getBaseUsageGuess(item) || 0)
+  if(!rate) return 'Пока не знаю расход'
+  const days = getDaysLeft(item)
+  const confidence = item.usageConfidence || 'AI оценка'
+  return 'Хватит примерно на ' + (days === null ? 'несколько дней' : days + ' дн.') + ' · ' + confidence + ' · ' + rate.toFixed(2) + ' шт/день'
+}
+function getDaysLeft(item){
+  const rate = Number(item.smartDailyRate || item.dailyRate || getBaseUsageGuess(item) || 0)
+  if(!rate || rate <= 0) return null
+  return Math.max(0, Math.ceil(Number(item.current || 0) / rate))
+}
+function getDaysLabel(item){
+  const d = getDaysLeft(item)
+  if(d === null) return 'Укажи расход в день'
+  if(Number(item.current || 0) <= 0) return 'Запас закончился'
+  if(d === 1) return 'Хватит на 1 день'
+  if(d < 5) return 'Хватит на ' + d + ' дня'
+  return 'Хватит на ' + d + ' дней'
+}
+function inferCategory(item){
+  const text = ((item.category || '') + ' ' + (item.place || '') + ' ' + (item.product || '') + ' ' + (item.extra || '')).toLowerCase()
+  if(text.includes('ван') || text.includes('туалет') || text.includes('шамп') || text.includes('paper')) return 'Ванная'
+  if(text.includes('кух') || text.includes('чай') || text.includes('коф') || text.includes('макарон') || text.includes('еда')) return 'Кухня'
+  if(text.includes('уборк') || text.includes('clean') || text.includes('порош') || text.includes('губк')) return 'Уборка'
+  if(text.includes('еда') || text.includes('снек') || text.includes('проду')) return 'Еда'
+  if(text.includes('ламп') || text.includes('батар') || text.includes('тех') || text.includes('кабель')) return 'Техника'
+  return 'Дом'
+}
+function getAllCategories(){
+  const base = ['all','Ванная','Кухня','Уборка','Еда','Техника','Дом','Избранное']
+  const extra = [...new Set(items.map(i => i.category).filter(Boolean))]
+  return [...new Set([...base, ...extra])]
+}
+function renderCategoryChips(){
+  const bar = document.getElementById('category-bar')
+  if(!bar) return
+  bar.innerHTML = getAllCategories().map(cat => '<button class="category-chip '+(activeCategory === cat ? 'active' : '')+'" data-category="'+cat+'">'+cat+'</button>').join('')
+  bar.querySelectorAll('.category-chip').forEach(btn => btn.onclick = () => {
+    activeCategory = btn.dataset.category
+    renderCategoryChips()
+    scheduleRenderHome()
+  })
+}
+function applyItemFilters(list){
+  let next = [...list]
+  if(activeCategory !== 'all'){
+    next = activeCategory === 'Избранное' ? next.filter(i => i.favorite) : next.filter(i => (i.category || inferCategory(i)) === activeCategory)
+  }
+  if(searchQuery){
+    const q = searchQuery.toLowerCase()
+    next = next.filter(i => [i.product, i.brand, i.extra, i.place, i.category].some(v => String(v || '').toLowerCase().includes(q)))
+  }
+  if(sortMode === 'name') next.sort((a,b) => String(a.product).localeCompare(String(b.product), 'ru'))
+  else if(sortMode === 'qty') next.sort((a,b) => Number(a.current) - Number(b.current))
+  else if(sortMode === 'date') next.sort((a,b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+  else {
+    const order = {urgent:0, warn:1, ok:2}
+    next.sort((a,b) => order[getStatus(a)] - order[getStatus(b)])
+  }
+  return next
+}
+function setShoppingChecked(id, checked){
+  shoppingChecked[id] = checked
+  saveJSON(SHOPPING_CHECKED_KEY, shoppingChecked)
+}
+async function toggleFavoriteCurrent(){
+  const idx = items.findIndex(i => i.id === currentItemId)
+  if(idx < 0) return
+  items[idx].favorite = !items[idx].favorite
+  const ok = await saveItems()
+  if(!ok) return
+  scheduleRenderHome()
+  renderAnalytics()
+  openDetail(currentItemId)
+  showToast(items[idx].favorite ? 'Добавлено в избранное' : 'Убрано из избранного')
+}
+function renderAnalytics(){
+  document.getElementById('an-total').textContent = items.length
+  document.getElementById('an-favorites').textContent = items.filter(i => i.favorite).length
+  document.getElementById('an-buy').textContent = items.filter(i => ['warn','urgent'].includes(getStatus(i))).length
+  document.getElementById('an-fast').textContent = items.filter(i => (getDaysLeft(i) || 999) <= 3).length
+  const catEl = document.getElementById('analytics-categories')
+  const categories = getAllCategories().filter(c => c !== 'all' && c !== 'Избранное').map(cat => ({cat, count: items.filter(i => i.category === cat).length})).filter(x => x.count)
+  catEl.innerHTML = categories.length ? categories.map(({cat,count}) => '<div class="mini-item"><span>'+cat+'</span><strong>'+count+'</strong></div>').join('') : '<div class="mini-item"><span>Категории появятся после добавления товаров</span></div>'
+  const fastEl = document.getElementById('analytics-fast-list')
+  const fast = [...items].sort((a,b) => (getDaysLeft(a) || 999) - (getDaysLeft(b) || 999)).slice(0,5)
+  fastEl.innerHTML = fast.length ? fast.map(item => '<div class="mini-item"><span>'+item.product+'</span><strong>'+getDaysLabel(item)+'</strong></div>').join('') : '<div class="mini-item"><span>Пока нет данных</span></div>'
+}
+function saveTemplates(){
+  saveJSON(TEMPLATE_KEY, templates)
+}
+function renderTemplates(){
+  const el = document.getElementById('template-list')
+  if(!el) return
+  if(!templates.length){
+    el.innerHTML = '<div class="mini-item"><span>Пока нет шаблонов</span></div>'
+    return
+  }
+  el.innerHTML = templates.map(t => '<div class="template-card"><div class="analytics-label">'+t.product+'</div><div class="network-main">'+(t.brand || 'Без бренда')+' · '+(t.category || 'Дом')+' · '+(t.total || 1)+' шт</div><div class="template-actions"><button class="small-btn primary" data-use="'+t.id+'">Добавить</button><button class="small-btn secondary" data-del="'+t.id+'">Удалить</button></div></div>').join('')
+  el.querySelectorAll('[data-use]').forEach(btn => btn.onclick = () => useTemplate(btn.dataset.use))
+  el.querySelectorAll('[data-del]').forEach(btn => btn.onclick = () => deleteTemplate(btn.dataset.del))
+}
+function saveCurrentAsTemplate(){
+  const item = items.find(i => i.id === currentItemId)
+  if(!item){
+    showToast('Сначала открой товар')
+    return
+  }
+  const tpl = {id:'tpl_'+Date.now(), product:item.product, brand:item.brand, place:item.place, extra:item.extra, total:item.total, category:item.category, dailyRate:item.dailyRate}
+  templates.unshift(tpl)
+  saveTemplates()
+  renderTemplates()
+  showToast('Шаблон сохранён')
+}
+function useTemplate(id){
+  const tpl = templates.find(t => t.id === id)
+  if(!tpl) return
+  const item = {id:String(Date.now()), place:tpl.place || 'Дом', product:tpl.product, brand:tpl.brand || 'Без бренда', extra:tpl.extra || '', total:Number(tpl.total || 1), current:Number(tpl.total || 1), photo:'', photoId:'', dailyRate:Number(tpl.dailyRate || 0.4), category:tpl.category || 'Дом', favorite:false, createdAt:Date.now(), history:[{type:'created', qty:Number(tpl.total || 1), ts:Date.now()}]}
+  items.unshift(item)
+  saveItems().then(() => { scheduleRenderHome(); renderTemplates(); showToast('Товар добавлен из шаблона') })
+}
+function deleteTemplate(id){
+  templates = templates.filter(t => t.id !== id)
+  saveTemplates()
+  renderTemplates()
+}
+function updateBottomNav(screen){
+  document.querySelectorAll('#bottom-nav .nav-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === screen))
+}
+function fmtDate(ts){
+  const d = new Date(ts)
+  const now = new Date()
+  const diff = Math.round((now - d) / 86400000)
+  if(diff === 0) return 'Сегодня'
+  if(diff === 1) return 'Вчера'
+  return d.toLocaleDateString('ru-RU', {day:'numeric', month:'short'})
+}
+function fallbackThumb(item){
+  return '<div class="item-thumb-fallback">' + (item.brand || '?').slice(0,4).toUpperCase() + '</div>'
+}
+let renderHomeScheduled = false
+function scheduleRenderHome(){
+  if(renderHomeScheduled) return
+  renderHomeScheduled = true
+  requestAnimationFrame(() => {
+    renderHomeScheduled = false
+    renderHome()
+  })
+}
+function renderHome(){
+  const list = document.getElementById('items-list')
+  const banner = document.getElementById('shopping-banner')
+  const bannerItems = document.getElementById('banner-items')
+  const bannerTitle = document.getElementById('banner-title')
+
+  const warns = items.filter(i => getStatus(i) === 'warn')
+  const urgents = items.filter(i => getStatus(i) === 'urgent')
+  document.getElementById('sum-total').textContent = items.length
+  document.getElementById('sum-warn').textContent = warns.length
+  document.getElementById('sum-urgent').textContent = urgents.length
+
+  const needBuy = [...urgents, ...warns]
+  if(needBuy.length){
+    banner.style.display = 'block'
+    bannerTitle.textContent = 'Купить ' + needBuy.length
+    bannerItems.innerHTML = needBuy.map(i => '<div class="banner-tag '+(getStatus(i)==='urgent'?'urgent':'')+'">'+i.product+'</div>').join('')
+  } else {
+    banner.style.display = 'none'
+  }
+
+  if(!items.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Ещё нет товаров</div><div class="empty-sub">Нажмите + чтобы добавить первый</div></div>'
+    return
+  }
+
+  const filteredBase = activeFilter === 'all' ? items : items.filter(i => getStatus(i) === activeFilter)
+  if(!filteredBase.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🗂️</div><div class="empty-text">По этому фильтру пусто</div><div class="empty-sub">Переключи вкладку выше</div></div>'
+    return
+  }
+
+  const sorted = applyItemFilters(filteredBase)
+  if(!sorted.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">⌕</div><div class="empty-text">Ничего не найдено</div><div class="empty-sub">Смени поиск, категорию или сортировку</div></div>'
+    return
+  }
+
+  list.innerHTML = sorted.map(item => {
+    const status = getStatus(item)
+    const statusLabel = status === 'urgent' ? 'Срочно' : status === 'warn' ? 'Скоро' : 'В норме'
+    const thumbSrc = attachPhoto(item)
+    const thumb = thumbSrc ? '<img src="'+thumbSrc+'" alt="">' : fallbackThumb(item)
+    const topMeta = [item.category || inferCategory(item), item.favorite ? '★' : ''].filter(Boolean).join(' · ')
+    return '<div class="item-card status-'+status+'" data-id="'+item.id+'">'+
+      '<div class="item-thumb">'+thumb+'</div>'+
+      '<div class="item-info"><div class="item-name">'+item.product+'</div><div class="item-sub">'+item.brand+((item.extra && String(item.extra).trim()) ? ' · '+item.extra : '')+'</div></div>'+
+      '<div class="item-right"><div class="item-status-chip '+status+'">'+statusLabel+'</div><div class="item-qty">'+item.current+'</div><div class="item-days">'+getDaysLabel(item)+'</div></div>'+
+      '</div>'
+  }).join('')
+
+  list.querySelectorAll('.item-card').forEach(el => {
+    el.onclick = () => openDetail(el.dataset.id)
+  })
+}
+
+function resetCamera(){
+  pendingImageRunId++
+  photoData = ''
+  photoLoaded = false
+  document.getElementById('inp-camera').value = ''
+  document.getElementById('inp-gallery').value = ''
+  document.getElementById('cam-img').src = ''
+  document.getElementById('cam-live').style.display = 'flex'
+  document.getElementById('cam-captured').style.display = 'none'
+  document.getElementById('cap-scan-line').style.display = 'none'
+  document.getElementById('analyzing-badge').style.display = 'none'
+  document.getElementById('result-overlay').style.display = 'none'
+  document.getElementById('cam-reset-btn').style.display = 'none'
+  document.getElementById('cam-recognize-btn').style.display = 'none'
+}
+function showCaptured(src){
+  document.getElementById('cam-img').src = src
+  document.getElementById('cam-live').style.display = 'none'
+  document.getElementById('cam-captured').style.display = 'block'
+  document.getElementById('cam-reset-btn').style.display = 'block'
+  document.getElementById('cam-recognize-btn').style.display = 'block'
+}
+function handleFileInput(file){
+  if(!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    photoData = e.target.result
+    photoLoaded = true
+    showCaptured(photoData)
+  }
+  reader.readAsDataURL(file)
+}
+
+
+async function recognizeProduct(){
+  if(!photoLoaded || !photoData){
+    showToast('Сначала добавь фото')
+    return
+  }
+
+  document.getElementById('cap-scan-line').style.display = 'block'
+  document.getElementById('analyzing-badge').style.display = 'flex'
+  document.getElementById('cam-reset-btn').style.display = 'none'
+  document.getElementById('cam-recognize-btn').style.display = 'none'
+  document.getElementById('result-overlay').style.display = 'none'
+
+  try{
+    const imageResponse = await fetch(photoData)
+    const blob = await imageResponse.blob()
+    const fd = new FormData()
+    fd.append('file', blob, 'capture.jpg')
+
+    const r = await fetch(GEMINI_BACKEND_URL, {
+      method: 'POST',
+      body: fd
+    })
+
+    const data = await r.json().catch(() => ({}))
+    if(!r.ok){
+      throw new Error(typeof data.error === 'string' ? data.error : 'Ошибка backend')
+    }
+
+    const result = {
+      place: String(data.place || 'Дом').trim(),
+      product: String(data.product || 'Не распознано').trim(),
+      brand: String(data.brand || 'Без бренда').trim(),
+      extra: String(data.extra || 'Проверь и исправь вручную').trim(),
+      total: Math.max(1, Math.round(Number(data.total || 1))),
+      usageRateGuess: Math.max(0.01, Number(data.usage_rate_guess || 0.4))
+    }
+
+    document.getElementById('cap-scan-line').style.display = 'none'
+    document.getElementById('analyzing-badge').style.display = 'none'
+    document.getElementById('res-icon').innerHTML = '<img src="' + photoData + '" alt="">'
+    document.getElementById('res-name').textContent = result.brand
+    document.getElementById('res-sub').textContent = result.product + ' · ' + result.total + ' шт'
+    document.getElementById('result-overlay').style.display = 'block'
+
+    setTimeout(() => {
+      pendingDraft = result
+      pendingPhoto = photoData
+      openConfirm()
+    }, 500)
+  }catch(e){
+    document.getElementById('cap-scan-line').style.display = 'none'
+    document.getElementById('analyzing-badge').style.display = 'none'
+    document.getElementById('cam-reset-btn').style.display = 'block'
+    document.getElementById('cam-recognize-btn').style.display = 'block'
+    showToast(e && e.message ? e.message : 'Не удалось подключиться к AI backend')
+  }
+}
+
+function openConfirm(){
+  if(!pendingDraft) return
+  qtyMax = pendingDraft.total
+  qtyVal = Math.max(1, Math.floor(pendingDraft.total * 0.65))
+  document.getElementById('conf-photo').innerHTML = pendingPhoto ? '<img src="'+pendingPhoto+'" alt="">' : '<div class="confirm-photo-placeholder">Нет фото</div>'
+  document.getElementById('conf-photo').innerHTML = pendingPhoto ? '<img src="'+pendingPhoto+'" alt="">' : '<div class="confirm-photo-placeholder">Нет фото</div>'
+  document.getElementById('conf-place').textContent = pendingDraft.place
+  document.getElementById('conf-product').textContent = pendingDraft.product
+  document.getElementById('conf-brand').textContent = pendingDraft.brand
+  document.getElementById('conf-extra').textContent = pendingDraft.extra
+  document.getElementById('conf-total').textContent = pendingDraft.total + ' шт'
+  updateQtyDisplay()
+  goTo('confirm')
+}
+function updateQtyDisplay(){
+  document.getElementById('qty-val').textContent = qtyVal
+  document.getElementById('qty-of-label').textContent = 'из ' + qtyMax + ' шт'
+}
+async function saveConfirmedItem(){
+  if(!pendingDraft){
+    showToast('Нет данных для сохранения')
+    return
+  }
+  pushUndoState('добавление товара')
+  let compressedPhoto = pendingPhoto || ''
+  if(compressedPhoto && String(compressedPhoto).startsWith('data:')){
+    compressedPhoto = await compressImageDataUrl(compressedPhoto, 800, 0.68)
+  }
+  let imagePair
+  try{
+    imagePair = await generateProductImages(compressedPhoto, pendingDraft)
+  }catch(e){
+    undoStack.pop()
+    alert('AI фото не сгенерировалось.\n\nПричина: ' + (e.message || 'Image generation failed') + '\n\nТовар не сохранён с неправильной картинкой. Бесплатный text-to-image не видит исходное фото и может сделать другой продукт. Для точного результата нужен image-to-image provider.')
+    return
+  }
+  const generatedCardPhoto = imagePair.generated_image
+  const originalCameraPhoto = imagePair.original_image || compressedPhoto
+  const createdAtIso = imagePair.created_at || new Date().toISOString()
+  const itemId = String(Date.now())
+  const item = {
+    id: itemId,
+    title: pendingDraft.product,
+    place: pendingDraft.place,
+    product: pendingDraft.product,
+    brand: pendingDraft.brand,
+    extra: pendingDraft.extra,
+    total: Number(pendingDraft.total) || 1,
+    current: Number(qtyVal) || 0,
+    generated_image: generatedCardPhoto,
+    generatedImageId: generatedCardPhoto ? ('p_' + itemId) : '',
+    original_image: originalCameraPhoto,
+    originalImageId: originalCameraPhoto ? ('op_' + itemId) : '',
+    photo: generatedCardPhoto,
+    photoId: generatedCardPhoto ? ('p_' + itemId) : '',
+    originalPhoto: originalCameraPhoto,
+    originalPhotoId: originalCameraPhoto ? ('op_' + itemId) : '',
+    imagePipeline: imagePair.source || 'local_product_card',
+    usageRateGuess: Number(pendingDraft.usageRateGuess || pendingDraft.usage_rate_guess || 0.4),
+    smartDailyRate: Number(pendingDraft.usageRateGuess || pendingDraft.usage_rate_guess || 0.4),
+    usageConfidence: 'AI оценка',
+    dailyRate: Number(pendingDraft.usageRateGuess || pendingDraft.usage_rate_guess || 0.4),
+    category: pendingDraft.category || inferCategory(pendingDraft),
+    favorite: false,
+    created_at: createdAtIso,
+    createdAt: Date.now(),
+    history: [{type:'created', qty:Number(qtyVal)||0, ts:Date.now()}]
+  }
+  items.unshift(item)
+  const ok = await saveItems()
+  if(!ok){
+    items.shift()
+    return
+  }
+  pendingDraft = null
+  pendingPhoto = ''
+  resetCamera()
+  scheduleRenderHome()
+  goTo('home')
+  showToast('Товар добавлен в запасы')
+}
+
+function openDetail(id){
+  const item = items.find(i => i.id === id)
+  if(!item) return
+  currentItemId = id
+  ensureDetailPlanButton()
+  document.getElementById('detail-title-bar').textContent = item.brand
+  document.getElementById('detail-name').textContent = item.product
+  document.getElementById('detail-meta').textContent = item.brand + ' · ' + item.place + ' · ' + item.total + ' шт'
+  document.getElementById('detail-desc').textContent = item.extra || ''
+  const detailPhoto = attachPhoto(item)
+  const originalPhoto = attachOriginalPhoto(item)
+  document.getElementById('detail-photo').innerHTML = (detailPhoto ? '<img src="'+detailPhoto+'" alt="">' : '<div class="detail-photo-placeholder">'+item.brand+'</div>') + (originalPhoto ? '<div class="original-photo-card"><div class="original-photo-title">Исходное фото</div><img src="'+originalPhoto+'" alt=""></div>' : '')
+
+  document.getElementById('det-qty').textContent = item.current
+  document.getElementById('det-unit').textContent = 'шт'
+  document.getElementById('det-current-big').textContent = item.current
+  document.getElementById('det-current-of').textContent = 'из ' + item.total + ' шт'
+  document.getElementById('det-rate-label').textContent = 'Текущий расход: ' + Number(item.dailyRate || 0) + ' / день'
+  const ratio = item.total ? item.current / item.total : 0
+  const bar = document.getElementById('det-bar')
+  bar.style.width = Math.max(4, Math.round(ratio * 100)) + '%'
+  bar.className = 'prog-bar-fill' + (getStatus(item) !== 'ok' ? ' warn' : '')
+  document.getElementById('det-days').textContent = getDaysLabel(item)
+
+  const st = getStatus(item)
+  const stEl = document.getElementById('det-status')
+  stEl.textContent = st === 'urgent' ? 'Срочно купить' : st === 'warn' ? 'Скоро закончится' : 'В запасе'
+  stEl.className = 'prog-status ' + st
+
+  renderHistory(item)
+  goTo('detail')
+}
+function renderHistory(item){
+  const el = document.getElementById('det-history')
+  if(!item.history || !item.history.length){
+    el.innerHTML = '<div class="history-item"><div class="history-text">Действий пока нет</div></div>'
+    return
+  }
+  const labels = {created:'Создан', used:'Использовано', bought:'Куплено'}
+  el.innerHTML = [...item.history].reverse().map(h => {
+    const cls = h.type === 'bought' ? 'bought' : h.type === 'created' ? 'created' : 'used'
+    return '<div class="history-item"><div class="history-dot '+cls+'"></div><div class="history-text">'+labels[h.type]+' · '+h.qty+' шт</div><div class="history-date">'+fmtDate(h.ts)+'</div></div>'
+  }).join('')
+}
+function useCurrent(){
+  const idx = items.findIndex(i => i.id === currentItemId)
+  if(idx < 0) return
+  if(items[idx].current <= 0){
+    showToast('Товар уже закончился')
+    return
+  }
+  pushUndoState('изменение остатка')
+  items[idx].current -= 1
+  items[idx].history.push({type:'used', qty:1, ts:Date.now()})
+  recalculateSmartUsage(items[idx])
+  saveItems()
+  scheduleRenderHome()
+  openDetail(currentItemId)
+  showToast('−1 записано')
+}
+function buyCurrent(){
+  const idx = items.findIndex(i => i.id === currentItemId)
+  if(idx < 0) return
+  pushUndoState('пополнение запаса')
+  items[idx].current = items[idx].total
+  items[idx].history.push({type:'bought', qty:items[idx].total, ts:Date.now()})
+  recalculateSmartUsage(items[idx])
+  saveItems()
+  scheduleRenderHome()
+  openDetail(currentItemId)
+  showToast('Запас пополнен')
+}
+async function deleteCurrent(){
+  const idx = items.findIndex(i => i.id === currentItemId)
+  if(idx < 0) return
+  const name = items[idx].product
+  const photoId = items[idx].photoId
+  const generatedImageId = items[idx].generatedImageId
+  const thumbId = items[idx].thumbId
+  const originalPhotoId = items[idx].originalPhotoId
+  const originalImageId = items[idx].originalImageId
+  pushUndoState('удаление товара')
+  items.splice(idx, 1)
+    if(photoId || generatedImageId || thumbId || originalPhotoId || originalImageId){
+      const photos = getPhotosMap()
+      if(photoId) delete photos[photoId]
+      if(generatedImageId) delete photos[generatedImageId]
+      if(thumbId) delete photos[thumbId]
+      if(originalPhotoId) delete photos[originalPhotoId]
+      if(originalImageId) delete photos[originalImageId]
+      try { savePhotosMap(photos) } catch(e) {}
+    }
+  await saveItems()
+  currentItemId = null
+  scheduleRenderHome()
+  goTo('home')
+  showToast('Удалено: ' + name)
+}
+
+
+function openManualAdd(){
+  editingItemId = null
+  document.getElementById('manual-title').textContent = 'Добавить вручную'
+  document.getElementById('manual-product').value = ''
+  document.getElementById('manual-brand').value = ''
+  document.getElementById('manual-place').value = ''
+  document.getElementById('manual-extra').value = ''
+  document.getElementById('manual-total').value = ''
+  document.getElementById('manual-current').value = ''
+  document.getElementById('manual-daily-rate').value = ''
+  goTo('manual')
+}
+function openManualEdit(id){
+  const item = items.find(i => i.id === id)
+  if(!item) return
+  editingItemId = id
+  document.getElementById('manual-title').textContent = 'Редактировать товар'
+  document.getElementById('manual-product').value = item.product || ''
+  document.getElementById('manual-brand').value = item.brand || ''
+  document.getElementById('manual-place').value = item.place || ''
+  document.getElementById('manual-extra').value = item.extra || ''
+  document.getElementById('manual-total').value = item.total ?? ''
+  document.getElementById('manual-current').value = item.current ?? ''
+  document.getElementById('manual-daily-rate').value = item.dailyRate ?? ''
+  goTo('manual')
+}
+async function saveManualForm(){
+  const product = document.getElementById('manual-product').value.trim()
+  const brand = document.getElementById('manual-brand').value.trim()
+  const place = document.getElementById('manual-place').value.trim()
+  const extra = document.getElementById('manual-extra').value.trim()
+  const total = Math.max(1, Number(document.getElementById('manual-total').value || 1))
+  const currentRaw = Number(document.getElementById('manual-current').value || 0)
+  const current = Math.max(0, Math.min(total, currentRaw))
+  const dailyRate = Math.max(0, Number(document.getElementById('manual-daily-rate').value || 0))
+
+  if(!product){
+    showToast('Введите название товара')
+    return
+  }
+
+  if(editingItemId){
+    const idx = items.findIndex(i => i.id === editingItemId)
+    if(idx < 0) return
+    pushUndoState('редактирование товара')
+    items[idx].product = product
+    items[idx].brand = brand || 'Без бренда'
+    items[idx].place = place || 'Дом'
+    items[idx].extra = extra
+    items[idx].total = total
+    items[idx].current = current
+    items[idx].dailyRate = dailyRate
+    items[idx].category = inferCategory({product, place, extra, category: items[idx].category})
+    if(!Array.isArray(items[idx].history)) items[idx].history = []
+    items[idx].history.push({type:'created', qty:current, ts:Date.now()})
+    recalculateSmartUsage(items[idx])
+    await saveItems()
+    scheduleRenderHome()
+    openDetail(editingItemId)
+    showToast('Изменения сохранены')
+    return
+  }
+
+  const item = {
+    id: String(Date.now()),
+    place: place || 'Дом',
+    product,
+    brand: brand || 'Без бренда',
+    extra,
+    total,
+    current,
+    photo: '',
+    photoId: '',
+    dailyRate: dailyRate,
+    usageRateGuess: dailyRate || getBaseUsageGuess({product, brand, place, extra}),
+    smartDailyRate: dailyRate || getBaseUsageGuess({product, brand, place, extra}),
+    usageConfidence: dailyRate ? 'вручную' : 'AI оценка',
+    category: inferCategory({product, place, extra}),
+    favorite: false,
+    createdAt: Date.now(),
+    history: [{type:'created', qty:current, ts:Date.now()}]
+  }
+  pushUndoState('ручное добавление товара')
+  items.unshift(item)
+  const ok = await saveItems()
+  if(!ok){
+    items.shift()
+    return
+  }
+  scheduleRenderHome()
+  goTo('home')
+  showToast('Товар добавлен')
+}
+async function clearAllItems(){
+  pushUndoState('очистка всех товаров')
+  items = []
+  currentItemId = null
+  editingItemId = null
+  try{
+    localStorage.removeItem(ITEMS_KEY)
+    localStorage.removeItem(PHOTOS_KEY)
+  }catch(e){}
+  photosCache = {}
+  await syncStateToServer()
+  scheduleRenderHome()
+  goTo('home')
+  showToast('Все товары удалены')
+}
+
+function updateFilterChips(){
+  document.querySelectorAll('#filter-bar .filter-chip').forEach(btn => {
+    const on = btn.dataset.filter === activeFilter
+    btn.classList.toggle('active', on)
+  })
+}
+function setFilter(name){
+  activeFilter = name
+  updateFilterChips()
+  scheduleRenderHome()
+}
+function renderManualPhoto(src){
+  const box = document.getElementById('manual-photo-box')
+  box.innerHTML = src ? '<img src="'+src+'" alt="">' : '<div class="confirm-photo-placeholder">Фото товара</div>'
+}
+function handleManualPhotoInput(file){
+  if(!file) return
+  const reader = new FileReader()
+  reader.onload = e => {
+    manualPhotoData = e.target.result || ''
+    renderManualPhoto(manualPhotoData)
+  }
+  reader.readAsDataURL(file)
+}
+function exportData(){
+  try{
+    const payload = {
+      version: 1,
+      exportedAt: new Date().toISOString(),
+      items,
+      photos: getPhotosMap()
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:'application/json'})
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    const stamp = new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')
+    a.href = url
+    a.download = 'homestock-backup-' + stamp + '.json'
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+    showToast('Экспорт готов')
+  }catch(e){
+    showToast('Ошибка экспорта')
+  }
+}
+async function importDataFromFile(file){
+  if(!file) return
+  try{
+    pushUndoState('импорт данных')
+    const text = await file.text()
+    const data = JSON.parse(text)
+    const nextItems = Array.isArray(data) ? data : (Array.isArray(data.items) ? data.items : [])
+    const nextPhotos = data && typeof data === 'object' && data.photos && typeof data.photos === 'object' ? data.photos : {}
+    if(!Array.isArray(nextItems)) throw new Error('bad items')
+    items = nextItems
+    savePhotosMap(nextPhotos)
+    const ok = await saveItems()
+    if(!ok) throw new Error('save failed')
+    scheduleRenderHome()
+    goTo('home')
+    showToast('Импорт завершён')
+  }catch(e){
+    showToast('Файл импорта не подошёл')
+  }
+}
+
+
+function renderShoppingList(){
+  const list = document.getElementById('shopping-list')
+  const needBuy = items.filter(i => ['warn','urgent'].includes(getStatus(i))).sort((a,b) => {
+    const order = {urgent:0, warn:1, ok:2}
+    return order[getStatus(a)] - order[getStatus(b)]
+  })
+  if(!needBuy.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🛍️</div><div class="empty-text">Покупать пока нечего</div><div class="empty-sub">Здесь появятся проблемные товары</div></div>'
+    return
+  }
+  list.innerHTML = needBuy.map(item => {
+    const status = getStatus(item)
+    const statusLabel = status === 'urgent' ? 'Срочно' : status === 'warn' ? 'Скоро' : 'В норме'
+    const thumbSrc = attachPhoto(item)
+    const thumb = thumbSrc ? '<img src="'+thumbSrc+'" alt="">' : fallbackThumb(item)
+    return '<div class="item-card status-'+status+'" data-id="'+item.id+'">'+
+      '<div class="item-thumb">'+thumb+'</div>'+
+      '<div class="item-info"><div class="item-name">'+item.product+'</div><div class="item-sub">'+item.brand+((item.extra && String(item.extra).trim()) ? ' · '+item.extra : '')+'</div></div>'+
+      '<div class="item-right"><div class="item-status-chip '+status+'">'+statusLabel+'</div><div class="item-qty">'+item.current+'</div><div class="item-days">'+getDaysLabel(item)+'</div></div>'+
+      '</div>'
+  }).join('')
+  list.querySelectorAll('.item-card').forEach(el => el.onclick = () => openDetail(el.dataset.id))
+}
+function openShopping(){
+  renderShoppingList()
+  goTo('shopping')
+}
+async function setDailyRate(val){
+  const idx = items.findIndex(i => i.id === currentItemId)
+  if(idx < 0) return
+  items[idx].dailyRate = Number(val)
+  items[idx].smartDailyRate = Number(val)
+  items[idx].usageRateGuess = Number(val)
+  items[idx].usageConfidence = 'вручную'
+  const ok = await saveItems()
+  if(!ok) return
+  scheduleRenderHome()
+  openDetail(currentItemId)
+  showToast('Расход обновлён')
+}
+
+async function changeCurrent(delta){
+  if(!currentItemId){
+    showToast('Ошибка: товар не выбран')
+    return
+  }
+
+  const item = items.find(i => i.id === currentItemId)
+  if(!item){
+    showToast('Товар не найден')
+    return
+  }
+
+  const next = Math.max(0, Math.min(item.total, item.current + delta))
+  if(next === item.current){
+    showToast('Достигнут предел')
+    return
+  }
+
+  item.current = next
+
+  if(!Array.isArray(item.history)) item.history = []
+  item.history.push({
+    type: delta > 0 ? 'bought' : 'used',
+    qty: Math.abs(delta),
+    ts: Date.now()
+  })
+  recalculateSmartUsage(item)
+
+  const ok = await saveItems()
+  if(!ok) return
+
+  document.getElementById('det-current-big').textContent = item.current
+  document.getElementById('det-current-of').textContent = 'из ' + item.total + ' шт'
+  document.getElementById('det-qty').textContent = item.current
+  document.getElementById('det-days').textContent = getDaysLabel(item)
+  document.getElementById('det-rate-label').textContent = smartUsageText(item)
+
+  const ratio = item.total ? item.current / item.total : 0
+  const bar = document.getElementById('det-bar')
+  bar.style.width = Math.max(4, Math.round(ratio * 100)) + '%'
+  bar.className = 'prog-bar-fill' + (getStatus(item) !== 'ok' ? ' warn' : '')
+
+  const st = getStatus(item)
+  const stEl = document.getElementById('det-status')
+  stEl.textContent = st === 'urgent' ? 'Срочно купить' : st === 'warn' ? 'Скоро закончится' : 'В запасе'
+  stEl.className = 'prog-status ' + st
+
+  scheduleRenderHome()
+  renderHistory(item)
+  showToast('Остаток обновлён')
+}
+
+// bindings
+  function setupUIEnhancements(){
+  const homeHeader = document.querySelector('.home-header')
+  if(homeHeader && !document.getElementById('home-add-btn')){
+    const greeting = homeHeader.querySelector('.home-greeting')
+    const title = homeHeader.querySelector('.home-title')
+    if(greeting && title){
+      const wrap = document.createElement('div')
+      wrap.className = 'home-header-top'
+      const textWrap = document.createElement('div')
+      greeting.parentNode.insertBefore(wrap, greeting)
+      textWrap.appendChild(greeting)
+      textWrap.appendChild(title)
+      wrap.appendChild(textWrap)
+      const addBtn = document.createElement('button')
+      addBtn.className = 'home-add-btn'
+      addBtn.id = 'home-add-btn'
+      addBtn.type = 'button'
+      addBtn.textContent = '+'
+      wrap.appendChild(addBtn)
+    }
+  }
+  const fab = document.getElementById('fab-add')
+  if(fab) fab.style.display = 'none'
+  if(!document.getElementById('quick-add-sheet')){
+    const sheet = document.createElement('div')
+    sheet.className = 'quick-add-sheet'
+    sheet.id = 'quick-add-sheet'
+    sheet.innerHTML = '<div class="quick-add-card"><div class="quick-add-title">Добавить товар</div><div class="quick-add-actions"><button class="quick-add-option" id="quick-add-ai" type="button"><div>AI Camera<span>Gemini Vision</span></div><strong>⌁</strong></button><button class="quick-add-option" id="quick-add-manual" type="button"><div>Вручную<span>Быстрое создание карточки</span></div><strong>+</strong></button></div><button class="quick-add-cancel" id="quick-add-cancel" type="button">Отмена</button></div>'
+    document.body.appendChild(sheet)
+  }
+  const toolbar = document.querySelector('.toolbar-card')
+  const homeToolbar = document.querySelector('#s-home .toolbar-card')
+  const homeCategoryBar = document.querySelector('#s-home #category-bar')
+  const homeFilterBar = document.querySelector('#s-home #filter-bar')
+  if(homeToolbar) homeToolbar.classList.add('home-search-hidden')
+  if(homeCategoryBar) homeCategoryBar.classList.add('home-search-hidden')
+  if(homeFilterBar) homeFilterBar.classList.add('home-search-hidden')
+  if(!document.getElementById('stock-selection-toolbar')){
+    const list = document.getElementById('items-list')
+    const bar = document.createElement('div')
+    bar.className = 'selection-toolbar'
+    bar.id = 'stock-selection-toolbar'
+    bar.innerHTML = '<button class="small-btn secondary" id="stock-select-toggle" type="button">Выделить</button><button class="small-btn primary" id="stock-delete-selected" type="button">Удалить</button><button class="small-btn secondary" id="stock-undo-btn" type="button">Вернуть</button>'
+    if(list) list.parentNode.insertBefore(bar, list)
+  }
+  const bottomNav = document.getElementById('bottom-nav')
+  if(bottomNav && !bottomNav.querySelector('[data-tab="categories"]')){
+    const btn = document.createElement('button')
+    btn.className = 'nav-btn'
+    btn.dataset.tab = 'categories'
+    btn.innerHTML = '<span class="nav-ico">□</span><span>Категории</span>'
+    const analyticsBtn = bottomNav.querySelector('[data-tab="analytics"]')
+    bottomNav.insertBefore(btn, analyticsBtn || null)
+  }
+  if(false && toolbar && !document.getElementById('btn-toggle-categories')){
+    toolbar.classList.add('minimal')
+    const actions = document.createElement('div')
+    actions.className = 'template-actions'
+    actions.innerHTML = '<button id="btn-toggle-categories" class="small-btn secondary" type="button">Категории</button>'
+    toolbar.appendChild(actions)
+  }
+  const categoryBar = document.getElementById('category-bar')
+  if(categoryBar) categoryBar.classList.add('collapsed')
+
+  const homeNetwork = document.querySelector('#s-home .network-card')
+  const homeActions = document.querySelector('#s-home .home-actions')
+  const settingsScreen = document.getElementById('s-settings')
+  if(settingsScreen && homeNetwork && !document.getElementById('settings-ai-card')){
+    const aiCard = document.createElement('div')
+    aiCard.className = 'settings-card'
+    aiCard.id = 'settings-ai-card'
+    aiCard.innerHTML = '<div class="analytics-label">AI и сервер</div>'
+    aiCard.appendChild(homeNetwork)
+    settingsScreen.insertBefore(aiCard, settingsScreen.children[1] || null)
+  }
+  if(settingsScreen && homeActions && !document.getElementById('settings-data-card')){
+    const dataCard = document.createElement('div')
+    dataCard.className = 'settings-card'
+    dataCard.id = 'settings-data-card'
+    dataCard.innerHTML = '<div class="analytics-label">Данные</div>'
+    dataCard.appendChild(homeActions)
+    const undoWrap = document.createElement('div')
+    undoWrap.className = 'template-actions'
+    undoWrap.innerHTML = '<button id="btn-undo" class="small-btn secondary" type="button">Назад</button><label for="btn-import-file-clone" class="small-btn secondary" style="display:inline-flex;align-items:center;justify-content:center">Импорт</label><input id="btn-import-file-clone" type="file" accept="application/json" style="display:none">'
+    dataCard.appendChild(undoWrap)
+    settingsScreen.insertBefore(dataCard, document.getElementById('settings-ai-card') ? document.getElementById('settings-ai-card').nextSibling : (settingsScreen.children[2] || null))
+    const importClone = undoWrap.querySelector('#btn-import-file-clone')
+    if(importClone){
+      importClone.onchange = e => importDataFromFile(e.target.files?.[0])
+      const importMain = document.getElementById('btn-import-file')
+      if(importMain) importMain.style.display = 'none'
+      }
+    }
+    const manualBtn = document.getElementById('btn-add-manual')
+    if(manualBtn) manualBtn.remove()
+    const clearAllBtn = document.getElementById('btn-clear-all')
+    if(clearAllBtn) clearAllBtn.remove()
+    const undoBtn = document.getElementById('btn-undo')
+    if(undoBtn) undoBtn.remove()
+    const oldImportLabel = document.querySelector('label[for="btn-import-file"]')
+    if(oldImportLabel) oldImportLabel.remove()
+  const addManualBtn = document.getElementById('btn-add-manual')
+  if(addManualBtn) addManualBtn.textContent = 'Добавить вручную'
+  const exportBtn = document.getElementById('btn-export')
+  if(exportBtn) exportBtn.textContent = 'Экспорт'
+  const clearBtn = document.getElementById('btn-clear-all')
+  if(clearBtn) clearBtn.textContent = 'Очистить'
+
+  const cameraScreen = document.getElementById('s-camera')
+  if(cameraScreen){
+    cameraScreen.classList.add('camera-premium')
+    const title = cameraScreen.querySelector('.cam-title')
+    if(title) title.textContent = 'Gemini Vision'
+    const backBtn = document.getElementById('cam-back-btn')
+    if(backBtn) backBtn.textContent = '←'
+    const hint = cameraScreen.querySelector('.camera-hint') || document.createElement('div')
+    hint.className = 'camera-hint'
+    hint.textContent = 'Сделайте фото упаковки. AI распознает товар, бренд и предложит карточку для сохранения.'
+    const windowEl = cameraScreen.querySelector('.camera-window')
+    if(windowEl && !hint.parentElement) windowEl.insertAdjacentElement('afterend', hint)
+    const controls = cameraScreen.querySelector('.camera-controls')
+    if(controls){
+      controls.innerHTML = '<div class="camera-dock"><label class="camera-primary"> <span><small>Gemini AI</small>Сделать фото</span><input type="file" id="inp-camera" accept="image/*" capture="environment"></label><label class="camera-secondary">Галерея<input type="file" id="inp-gallery" accept="image/*"></label></div><div class="camera-actions"><button class="camera-tertiary" id="cam-reset-btn" style="display:none">Очистить</button><button class="camera-tertiary" id="cam-recognize-btn" style="display:none">Распознать</button></div>'
+    }
+    const legacyHint = cameraScreen.querySelector('.camera-controls').previousElementSibling
+    if(legacyHint && legacyHint.className === '') legacyHint.style.display = 'none'
+  }
+}
+
+document.getElementById('fab-add').onclick = () => { resetCamera(); goTo('camera') }
+if(document.getElementById('btn-add-manual')) document.getElementById('btn-add-manual').onclick = openManualAdd
+document.getElementById('shopping-banner').onclick = openShopping
+if(document.getElementById('btn-clear-all')) document.getElementById('btn-clear-all').onclick = clearAllItems
+if(document.getElementById('btn-export')) document.getElementById('btn-export').onclick = exportData
+if(document.getElementById('btn-import-file')) document.getElementById('btn-import-file').onchange = e => importDataFromFile(e.target.files?.[0])
+function renderItemCardMarkup(item, options = {}){
+  const status = getStatus(item)
+  const statusLabel = status === 'urgent' ? 'Срочно' : status === 'warn' ? 'Скоро' : 'В норме'
+  const thumbSrc = attachThumb(item)
+  const thumb = thumbSrc ? '<img src="'+thumbSrc+'" alt="">' : fallbackThumb(item)
+  const topMeta = [item.category || inferCategory(item), item.favorite ? '★ Избранное' : ''].filter(Boolean).join(' · ')
+  const checked = Boolean(options.checked)
+  const check = options.withCheck
+    ? '<input class="shopping-check" type="checkbox" data-check-id="'+item.id+'" '+(checked ? 'checked' : '')+'>'
+    : ''
+  return '<div class="item-card status-'+status+(checked ? ' checked-item' : '')+'" data-id="'+item.id+'">'+
+    '<div class="check-row">'+
+      check+
+      '<div class="item-thumb">'+thumb+'</div>'+
+      '<div class="item-info"><div class="item-name">'+item.product+'</div><div class="item-sub">'+topMeta+'</div><div class="item-sub">'+item.brand+((item.extra && String(item.extra).trim()) ? ' · '+item.extra : '')+'</div></div>'+
+      '<div class="item-right"><div class="item-status-chip '+status+'">'+statusLabel+'</div><div class="item-qty">'+item.current+'</div><div class="item-days">'+getDaysLabel(item)+'</div></div>'+
+    '</div>'+
+  '</div>'
+}
+function renderHome(){
+  const list = document.getElementById('items-list')
+  const banner = document.getElementById('shopping-banner')
+  const bannerItems = document.getElementById('banner-items')
+  const bannerTitle = document.getElementById('banner-title')
+  const warns = items.filter(i => getStatus(i) === 'warn')
+  const urgents = items.filter(i => getStatus(i) === 'urgent')
+  document.getElementById('sum-total').textContent = items.length
+  document.getElementById('sum-warn').textContent = warns.length
+  document.getElementById('sum-urgent').textContent = urgents.length
+  const needBuy = [...urgents, ...warns]
+  if(needBuy.length){
+    banner.style.display = 'block'
+    bannerTitle.textContent = 'Купить ' + needBuy.length
+    bannerItems.innerHTML = needBuy.map(i => '<div class="banner-tag '+(getStatus(i)==='urgent'?'urgent':'')+'">'+i.product+'</div>').join('')
+  } else {
+    banner.style.display = 'none'
+  }
+  if(!items.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Пока нет товаров</div><div class="empty-sub">Нажмите кнопку добавления и отсканируйте первый продукт</div></div>'
+    return
+  }
+  const filteredBase = activeFilter === 'all' ? items : items.filter(i => getStatus(i) === activeFilter)
+  const sorted = applyItemFilters(filteredBase)
+  if(!sorted.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">⌕</div><div class="empty-text">Ничего не найдено</div><div class="empty-sub">Попробуйте другой поиск, категорию или сортировку</div></div>'
+    return
+  }
+  list.innerHTML = sorted.map(item => renderItemCardMarkup(item)).join('')
+  list.querySelectorAll('.item-card').forEach(el => {
+    el.onclick = () => openDetail(el.dataset.id)
+  })
+}
+function renderShoppingList(){
+  const list = document.getElementById('shopping-list')
+  const needBuy = items.filter(i => ['warn','urgent'].includes(getStatus(i))).sort((a,b) => {
+    const order = {urgent:0, warn:1, ok:2}
+    return order[getStatus(a)] - order[getStatus(b)]
+  })
+  if(!needBuy.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">🛍️</div><div class="empty-text">Покупать пока нечего</div><div class="empty-sub">Здесь появятся товары, которые заканчиваются</div></div>'
+    return
+  }
+  list.innerHTML = needBuy.map(item => renderItemCardMarkup(item, {withCheck:true, checked:shoppingChecked[item.id]})).join('')
+  list.querySelectorAll('[data-check-id]').forEach(el => {
+    el.onclick = e => e.stopPropagation()
+    el.onchange = e => {
+      setShoppingChecked(el.dataset.checkId, e.target.checked)
+      renderShoppingList()
+    }
+  })
+  list.querySelectorAll('.item-card').forEach(el => el.onclick = () => openDetail(el.dataset.id))
+}
+function openDetail(id){
+  const item = items.find(i => i.id === id)
+  if(!item) return
+  currentItemId = id
+  document.getElementById('detail-title-bar').textContent = item.brand || 'Товар'
+  document.getElementById('detail-name').textContent = item.product
+  document.getElementById('detail-meta').textContent = [item.brand || 'Без бренда', item.place || 'Дом', (item.category || inferCategory(item)), (item.total || 0) + ' шт'].join(' · ')
+  document.getElementById('detail-desc').textContent = item.extra || 'Добавьте заметку, размер упаковки или уточнение по продукту.'
+  const detailPhoto = attachPhoto(item)
+  document.getElementById('detail-photo').innerHTML = detailPhoto ? '<img src="'+detailPhoto+'" alt="">' : '<div class="detail-photo-placeholder">Просканируйте продукт</div>'
+  document.getElementById('det-qty').textContent = item.current
+  document.getElementById('det-unit').textContent = 'шт'
+  document.getElementById('det-current-big').textContent = item.current
+  document.getElementById('det-current-of').textContent = 'из ' + item.total + ' шт'
+  document.getElementById('det-rate-label').textContent = 'Текущий расход: ' + Number(item.dailyRate || 0) + ' / день'
+  const ratio = item.total ? item.current / item.total : 0
+  const bar = document.getElementById('det-bar')
+  bar.style.width = Math.max(4, Math.round(ratio * 100)) + '%'
+  bar.className = 'prog-bar-fill' + (getStatus(item) !== 'ok' ? ' warn' : '')
+  document.getElementById('det-days').textContent = getDaysLabel(item)
+  const st = getStatus(item)
+  const stEl = document.getElementById('det-status')
+  stEl.textContent = st === 'urgent' ? 'Срочно купить' : st === 'warn' ? 'Скоро закончится' : 'В запасе'
+  stEl.className = 'prog-status ' + st
+    const favBtn = document.getElementById('det-fav-btn')
+    if(favBtn){
+      favBtn.style.display = ''
+      favBtn.innerHTML = (item.favorite ? 'Убрать из избранного' : 'В избранное') + '<span>' + (item.favorite ? 'Показывать как обычный товар' : 'Быстрый доступ сверху и в аналитике') + '</span>'
+    }
+  const planBtn = document.getElementById('det-plan-btn')
+  if(planBtn){
+    const forced = Boolean(shoppingForced[item.id])
+    planBtn.innerHTML = (forced ? 'Убрать из плана' : 'В план покупок') + '<span>' + (forced ? 'Не держать в покупках вручную' : 'Добавить в покупки даже если остаток нормальный') + '</span>'
+  }
+  renderHistory(item)
+  goTo('detail')
+}
+setupUIEnhancements()
+function openQuickAdd(){
+  const sheet = document.getElementById('quick-add-sheet')
+  if(sheet) sheet.classList.add('show')
+}
+function closeQuickAdd(){
+  const sheet = document.getElementById('quick-add-sheet')
+  if(sheet) sheet.classList.remove('show')
+}
+document.getElementById('search-input').oninput = e => { searchQuery = e.target.value.trim(); scheduleRenderHome() }
+document.getElementById('sort-select').onchange = e => { sortMode = e.target.value; scheduleRenderHome() }
+if(document.getElementById('cat-search-input')) document.getElementById('cat-search-input').oninput = e => { categorySearchQuery = e.target.value.trim(); renderCategoriesScreen() }
+if(document.getElementById('cat-sort-select')) document.getElementById('cat-sort-select').onchange = e => { categorySortMode = e.target.value; renderCategoriesScreen() }
+if(document.getElementById('home-add-btn')) document.getElementById('home-add-btn').onclick = openQuickAdd
+if(document.getElementById('quick-add-cancel')) document.getElementById('quick-add-cancel').onclick = closeQuickAdd
+if(document.getElementById('quick-add-sheet')) document.getElementById('quick-add-sheet').onclick = e => { if(e.target.id === 'quick-add-sheet') closeQuickAdd() }
+if(document.getElementById('quick-add-ai')) document.getElementById('quick-add-ai').onclick = () => { closeQuickAdd(); resetCamera(); goTo('camera') }
+if(document.getElementById('quick-add-manual')) document.getElementById('quick-add-manual').onclick = () => { closeQuickAdd(); openManualAdd() }
+if(document.getElementById('btn-toggle-categories')) document.getElementById('btn-toggle-categories').onclick = () => document.getElementById('category-bar').classList.toggle('collapsed')
+if(document.getElementById('btn-undo')) document.getElementById('btn-undo').onclick = undoLastAction
+
+function updateStockSelectionToolbar(){
+  const toggle = document.getElementById('stock-select-toggle')
+  const del = document.getElementById('stock-delete-selected')
+  if(toggle) toggle.textContent = stockSelectionMode ? 'Готово' : 'Выделить'
+  const count = Object.keys(selectedStockIds).filter(id => selectedStockIds[id]).length
+  if(del){
+    del.textContent = count ? 'Удалить ' + count : 'Удалить'
+    del.disabled = !count
+    del.style.opacity = count ? '1' : '.48'
+  }
+}
+function toggleStockSelectionMode(){
+  stockSelectionMode = !stockSelectionMode
+  if(!stockSelectionMode) selectedStockIds = {}
+  updateStockSelectionToolbar()
+  scheduleRenderHome()
+}
+async function deleteSelectedStocks(){
+  const ids = Object.keys(selectedStockIds).filter(id => selectedStockIds[id])
+  if(!ids.length){
+    showToast('Сначала выдели товары')
+    return
+  }
+  pushUndoState('удаление выделенных товаров')
+  const idSet = new Set(ids)
+  const photos = getPhotosMap()
+  items.forEach(item => {
+    if(!idSet.has(item.id)) return
+    if(item.photoId) delete photos[item.photoId]
+    if(item.generatedImageId) delete photos[item.generatedImageId]
+    if(item.thumbId) delete photos[item.thumbId]
+    if(item.originalPhotoId) delete photos[item.originalPhotoId]
+    if(item.originalImageId) delete photos[item.originalImageId]
+  })
+  savePhotosMap(photos)
+  items = items.filter(item => !idSet.has(item.id))
+  selectedStockIds = {}
+  stockSelectionMode = false
+  await saveItems()
+  updateStockSelectionToolbar()
+  scheduleRenderHome()
+  showToast('Удалено: ' + ids.length)
+}
+if(document.getElementById('stock-select-toggle')) document.getElementById('stock-select-toggle').onclick = toggleStockSelectionMode
+if(document.getElementById('stock-delete-selected')) document.getElementById('stock-delete-selected').onclick = deleteSelectedStocks
+if(document.getElementById('stock-undo-btn')) document.getElementById('stock-undo-btn').onclick = undoLastAction
+
+function getShoppingPlanItem(item){
+  const days = getDaysLeft(item)
+  const pct = item.total ? Number(item.current || 0) / Number(item.total || 1) : 0
+  const forced = Boolean(shoppingForced[item.id])
+  let priority = 'later'
+  let title = 'Позже'
+  let reason = forced ? 'Добавлено в план вручную' : 'Можно купить позже'
+  let order = forced ? 3 : 4
+  if(Number(item.current || 0) <= 0){
+    priority = 'today'; title = 'Сегодня'; reason = 'Уже закончилось'; order = 0
+  }else if(days !== null && days <= 1){
+    priority = 'today'; title = 'Сегодня'; reason = 'Хватит примерно на ' + days + ' дн.'; order = 0
+  }else if(pct <= 0.12){
+    priority = 'today'; title = 'Сегодня'; reason = 'Остаток ниже 12%'; order = 0
+  }else if(days !== null && days <= 3){
+    priority = 'soon'; title = '1-3 дня'; reason = 'Прогноз: хватит на ' + days + ' дн.'; order = 1
+  }else if(pct <= 0.22){
+    priority = 'soon'; title = '1-3 дня'; reason = 'Остаток ниже 22%'; order = 1
+  }else if(days !== null && days <= 7){
+    priority = 'week'; title = 'На неделе'; reason = 'Прогноз: хватит на ' + days + ' дн.'; order = 2
+  }else if(pct <= 0.35){
+    priority = 'week'; title = 'На неделе'; reason = 'Остаток ниже 35%'; order = 2
+  }else if(forced || item.favorite || (days !== null && days <= 14) || pct <= 0.5){
+    priority = 'later'; title = forced ? 'В плане' : 'Позже'; order = forced ? 3 : 4
+    if(!forced) reason = item.favorite ? 'Избранный товар под наблюдением' : (days !== null ? 'Запланировать в течение 2 недель' : 'Остаток под наблюдением')
+  }
+  return {item, days, pct, priority, title, reason, order, forced}
+}
+function getShoppingPlan(){
+  return items
+    .map(getShoppingPlanItem)
+    .filter(p => p.order <= 3 || p.item.favorite)
+    .sort((a,b) => a.order - b.order || (a.days ?? 999) - (b.days ?? 999) || Number(a.item.current || 0) - Number(b.item.current || 0))
+}
+function renderCategoryScreenChips(){
+  const bar = document.getElementById('cat-category-bar')
+  if(!bar) return
+  bar.innerHTML = getAllCategories().map(cat => '<button class="category-chip '+(categoryActiveCategory === cat ? 'active' : '')+'" data-category="'+cat+'">'+cat+'</button>').join('')
+  bar.querySelectorAll('.category-chip').forEach(btn => btn.onclick = () => {
+    categoryActiveCategory = btn.dataset.category
+    renderCategoriesScreen()
+  })
+}
+function updateCategoryFilterChips(){
+  document.querySelectorAll('#cat-filter-bar .filter-chip').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.filter === categoryFilter)
+  })
+}
+function getCategoryFilteredItems(){
+  let next = categoryFilter === 'all' ? [...items] : items.filter(i => getStatus(i) === categoryFilter)
+  if(categoryActiveCategory !== 'all'){
+    next = categoryActiveCategory === 'РР·Р±СЂР°РЅРЅРѕРµ' || categoryActiveCategory === 'Избранное'
+      ? next.filter(i => i.favorite)
+      : next.filter(i => (i.category || inferCategory(i)) === categoryActiveCategory)
+  }
+  if(categorySearchQuery){
+    const q = categorySearchQuery.toLowerCase()
+    next = next.filter(i => [i.product, i.brand, i.extra, i.place, i.category].some(v => String(v || '').toLowerCase().includes(q)))
+  }
+  if(categorySortMode === 'name') next.sort((a,b) => String(a.product).localeCompare(String(b.product), 'ru'))
+  else if(categorySortMode === 'qty') next.sort((a,b) => Number(a.current) - Number(b.current))
+  else if(categorySortMode === 'date') next.sort((a,b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+  else {
+    const order = {urgent:0, warn:1, ok:2}
+    next.sort((a,b) => order[getStatus(a)] - order[getStatus(b)])
+  }
+  return next
+}
+function renderCategoriesScreen(){
+  renderCategoryScreenChips()
+  updateCategoryFilterChips()
+  const list = document.getElementById('category-items-list')
+  if(!list) return
+  const sorted = getCategoryFilteredItems()
+  if(!sorted.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">⌕</div><div class="empty-text">Ничего не найдено</div><div class="empty-sub">Измени поиск, категорию или фильтр</div></div>'
+    return
+  }
+  list.innerHTML = sorted.map(item => renderItemCardMarkup(item)).join('')
+  list.querySelectorAll('.item-card').forEach(el => el.onclick = () => openDetail(el.dataset.id))
+}
+function renderPlanCard(plan, withCheck){
+  const item = plan.item
+  const checked = Boolean(shoppingChecked[item.id])
+  const card = renderItemCardMarkup(item, {withCheck, checked})
+  return '<div class="plan-card '+(plan.forced ? 'manual' : '')+'" data-plan-id="'+item.id+'">'+
+    card.replace('<div class="item-right">', '<div class="item-right"><div class="plan-priority '+plan.priority+'">'+plan.title+'</div>')+
+    '<div class="plan-reason">'+plan.reason+'</div>'+
+  '</div>'
+}
+function updateShoppingBannerV2(plan){
+  const banner = document.getElementById('shopping-banner')
+  const bannerItems = document.getElementById('banner-items')
+  const bannerTitle = document.getElementById('banner-title')
+  if(!banner || !bannerItems || !bannerTitle) return
+  const today = plan.filter(p => p.priority === 'today')
+  const soon = plan.filter(p => p.priority === 'soon')
+  const week = plan.filter(p => p.priority === 'week')
+  if(!plan.length){
+    banner.style.display = 'none'
+    return
+  }
+  banner.style.display = 'block'
+  bannerTitle.textContent = today.length ? 'Купить сегодня: ' + today.length : (soon.length ? 'Скоро купить: ' + soon.length : 'План покупок: ' + plan.length)
+  bannerItems.innerHTML = '<div class="plan-banner-summary">'+
+    (today.length ? '<div class="plan-banner-pill">Сегодня ' + today.length + '</div>' : '')+
+    (soon.length ? '<div class="plan-banner-pill">1-3 дня ' + soon.length + '</div>' : '')+
+    (week.length ? '<div class="plan-banner-pill">На неделе ' + week.length + '</div>' : '')+
+    '</div>'+ plan.slice(0,4).map(p => '<div class="banner-tag '+(p.priority === 'today' ? 'urgent' : '')+'">'+p.item.product+'</div>').join('')
+}
+function renderHome(){
+  const list = document.getElementById('items-list')
+  const plan = getShoppingPlan()
+  const warns = items.filter(i => getStatus(i) === 'warn')
+  const urgents = items.filter(i => getStatus(i) === 'urgent')
+  document.getElementById('sum-total').textContent = items.length
+  document.getElementById('sum-warn').textContent = warns.length
+  document.getElementById('sum-urgent').textContent = urgents.length
+  updateShoppingBannerV2(plan)
+  if(!items.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Пока нет товаров</div><div class="empty-sub">Нажмите большой + и добавьте первый продукт через AI Camera</div></div>'
+    return
+  }
+  const filteredBase = activeFilter === 'all' ? items : items.filter(i => getStatus(i) === activeFilter)
+  const sorted = applyItemFilters(filteredBase)
+  if(!sorted.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">⌕</div><div class="empty-text">Ничего не найдено</div><div class="empty-sub">Попробуйте другой поиск, категорию или сортировку</div></div>'
+    return
+  }
+  list.innerHTML = sorted.map(item => renderItemCardMarkup(item)).join('')
+  list.querySelectorAll('.item-card').forEach(el => {
+    el.onclick = () => openDetail(el.dataset.id)
+  })
+}
+function renderShoppingList(){
+  const list = document.getElementById('shopping-list')
+  const plan = getShoppingPlan()
+  const visiblePlan = shoppingHideChecked ? plan.filter(p => !shoppingChecked[p.item.id]) : plan
+  const today = visiblePlan.filter(p => p.priority === 'today')
+  const soon = visiblePlan.filter(p => p.priority === 'soon')
+  const week = visiblePlan.filter(p => p.priority === 'week')
+  const later = visiblePlan.filter(p => p.priority === 'later')
+  const checkedCount = Object.values(shoppingChecked || {}).filter(Boolean).length
+  if(!plan.length){
+    list.innerHTML = '<div class="plan-hero"><div class="plan-hero-title">План чистый</div><div class="plan-hero-sub">Сейчас ничего срочного покупать не нужно. Можно открыть товар и добавить его в план вручную.</div></div><div class="plan-empty-actions"><button class="small-btn primary" onclick="goTo(&quot;home&quot;)">К запасам</button><button class="small-btn secondary" onclick="openQuickAdd()">Добавить товар</button></div>'
+    return
+  }
+  const section = (key, title, arr) => arr.length ? '<div class="plan-section '+key+'"><div class="plan-section-head"><div class="plan-section-title">'+title+'</div><div class="plan-count">'+arr.length+'</div></div>'+arr.map(p => renderPlanCard(p, true)).join('')+'</div>' : ''
+  list.innerHTML =
+    '<div class="plan-hero"><div class="plan-hero-title">План покупок V2</div><div class="plan-hero-sub">Автоматически считает срочность по расходу, проценту остатка и избранному. Отмеченное можно сразу пополнить в запасах.</div>'+
+    '<div class="plan-hero-grid"><div class="plan-metric"><strong>'+today.length+'</strong><span>Сегодня</span></div><div class="plan-metric"><strong>'+soon.length+'</strong><span>1-3 дня</span></div><div class="plan-metric"><strong>'+week.length+'</strong><span>Неделя</span></div></div>'+
+    '<div class="plan-toolbar"><button class="small-btn primary" id="plan-complete-btn">Купил отмеченное</button><button class="small-btn secondary" id="plan-hide-btn">'+(shoppingHideChecked ? 'Показать отмеченное' : 'Скрыть отмеченное')+'</button><button class="small-btn secondary" id="plan-clear-checks-btn">Очистить галочки</button><button class="small-btn secondary" onclick="goTo(&quot;home&quot;)">К запасам</button></div>'+
+    (checkedCount ? '<div class="plan-hero-sub">Отмечено: '+checkedCount+'</div>' : '')+
+    '</div>'+
+    section('today', 'Сегодня', today)+
+    section('soon', '1-3 дня', soon)+
+    section('week', 'На неделе', week)+
+    section('later', 'Позже / вручную / избранное', later)
+  const completeBtn = document.getElementById('plan-complete-btn')
+  if(completeBtn) completeBtn.onclick = completeCheckedShopping
+  const hideBtn = document.getElementById('plan-hide-btn')
+  if(hideBtn) hideBtn.onclick = () => {
+    shoppingHideChecked = !shoppingHideChecked
+    saveJSON(SHOPPING_HIDE_CHECKED_KEY, shoppingHideChecked)
+    renderShoppingList()
+  }
+  const clearBtn = document.getElementById('plan-clear-checks-btn')
+  if(clearBtn) clearBtn.onclick = () => {
+    shoppingChecked = {}
+    saveJSON(SHOPPING_CHECKED_KEY, shoppingChecked)
+    renderShoppingList()
+  }
+  list.querySelectorAll('[data-check-id]').forEach(el => {
+    el.onclick = e => e.stopPropagation()
+    el.onchange = e => {
+      setShoppingChecked(el.dataset.checkId, e.target.checked)
+      renderShoppingList()
+    }
+  })
+  list.querySelectorAll('.item-card').forEach(el => el.onclick = () => openDetail(el.dataset.id))
+}
+function ensureDetailPlanButton(){
+  if(document.getElementById('det-plan-btn')) return
+  const grid = document.querySelector('#s-detail .action-grid')
+  if(!grid) return
+  const btn = document.createElement('button')
+  btn.className = 'action-btn'
+  btn.id = 'det-plan-btn'
+  btn.innerHTML = 'В план покупок<span>Добавить вручную</span>'
+  const del = document.getElementById('det-del-btn')
+  grid.insertBefore(btn, del || null)
+  btn.onclick = toggleCurrentShoppingPlan
+}
+async function toggleCurrentShoppingPlan(){
+  const item = items.find(i => i.id === currentItemId)
+  if(!item) return
+  pushUndoState('изменение плана покупок')
+  if(shoppingForced[item.id]){
+    delete shoppingForced[item.id]
+    delete shoppingChecked[item.id]
+  }else{
+    shoppingForced[item.id] = true
+  }
+  saveJSON(SHOPPING_FORCED_KEY, shoppingForced)
+  saveJSON(SHOPPING_CHECKED_KEY, shoppingChecked)
+  await syncStateToServer()
+  scheduleRenderHome()
+  openDetail(item.id)
+  showToast(shoppingForced[item.id] ? 'Добавлено в план покупок' : 'Убрано из плана покупок')
+}
+async function completeCheckedShopping(){
+  const ids = Object.keys(shoppingChecked || {}).filter(id => shoppingChecked[id])
+  if(!ids.length){
+    showToast('Сначала отметь покупки галочками')
+    return
+  }
+  pushUndoState('покупка отмеченных товаров')
+  const idSet = new Set(ids)
+  items.forEach(item => {
+    if(!idSet.has(item.id)) return
+    item.current = Number(item.total || item.current || 1)
+    if(!Array.isArray(item.history)) item.history = []
+    item.history.push({type:'bought', qty:item.current, ts:Date.now()})
+    delete shoppingChecked[item.id]
+    delete shoppingForced[item.id]
+  })
+  saveJSON(SHOPPING_CHECKED_KEY, shoppingChecked)
+  saveJSON(SHOPPING_FORCED_KEY, shoppingForced)
+  await saveItems()
+  scheduleRenderHome()
+  renderShoppingList()
+  showToast('Запасы пополнены: ' + ids.length)
+}
+function renderItemCardMarkup(item, options = {}){
+  const status = getStatus(item)
+  const statusLabel = status === 'urgent' ? 'Срочно' : status === 'warn' ? 'Скоро' : 'В норме'
+  const thumbSrc = attachPhoto(item)
+  const thumb = thumbSrc ? '<img src="'+thumbSrc+'" alt="">' : fallbackThumb(item)
+  const topMeta = [item.category || inferCategory(item), item.favorite ? '★ Избранное' : ''].filter(Boolean).join(' · ')
+  const checked = Boolean(options.checked)
+  const shoppingCheck = options.withCheck ? '<input class="shopping-check" type="checkbox" data-check-id="'+item.id+'" '+(checked ? 'checked' : '')+'>' : ''
+  const stockCheck = options.selectMode ? '<input class="select-check" type="checkbox" data-select-id="'+item.id+'" '+(selectedStockIds[item.id] ? 'checked' : '')+'>' : ''
+  return '<div class="item-card status-'+status+(checked ? ' checked-item' : '')+(options.selectMode ? ' selecting' : '')+'" data-id="'+item.id+'">'+
+    '<div class="check-row">'+shoppingCheck+stockCheck+
+      '<div class="item-thumb">'+thumb+'</div>'+
+      '<div class="item-info"><div class="item-name">'+item.product+'</div><div class="item-sub">'+topMeta+'</div><div class="item-sub">'+item.brand+((item.extra && String(item.extra).trim()) ? ' · '+item.extra : '')+'</div></div>'+
+      '<div class="item-right"><div class="item-status-chip '+status+'">'+statusLabel+'</div><div class="item-qty">'+item.current+'</div><div class="item-days">'+getDaysLabel(item)+'</div></div>'+
+    '</div></div>'
+}
+function renderHome(){
+  const list = document.getElementById('items-list')
+  const plan = getShoppingPlan()
+  const warns = items.filter(i => getStatus(i) === 'warn')
+  const urgents = items.filter(i => getStatus(i) === 'urgent')
+  document.getElementById('sum-total').textContent = items.length
+  document.getElementById('sum-warn').textContent = warns.length
+  document.getElementById('sum-urgent').textContent = urgents.length
+  updateShoppingBannerV2(plan)
+  updateStockSelectionToolbar()
+  if(!items.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Пока нет товаров</div><div class="empty-sub">Нажми большой + и добавь первый продукт</div></div>'
+    return
+  }
+  const sorted = applyItemFilters(items)
+  list.innerHTML = sorted.map(item => renderItemCardMarkup(item, {selectMode:stockSelectionMode})).join('')
+  list.querySelectorAll('[data-select-id]').forEach(el => {
+    el.onclick = e => e.stopPropagation()
+    el.onchange = e => {
+      selectedStockIds[el.dataset.selectId] = e.target.checked
+      updateStockSelectionToolbar()
+      renderHome()
+    }
+  })
+  list.querySelectorAll('.item-card').forEach(el => {
+    el.onclick = () => {
+      if(stockSelectionMode){
+        selectedStockIds[el.dataset.id] = !selectedStockIds[el.dataset.id]
+        updateStockSelectionToolbar()
+        renderHome()
+      }else openDetail(el.dataset.id)
+    }
+  })
+}
+function openDetail(id){
+  const item = items.find(i => i.id === id)
+  if(!item) return
+  currentItemId = id
+  document.getElementById('detail-title-bar').textContent = item.brand || 'Товар'
+  document.getElementById('detail-name').textContent = item.product || item.title || 'Товар'
+  document.getElementById('detail-meta').textContent = [item.brand || 'Без бренда', item.place || 'Дом', (item.category || inferCategory(item)), (item.total || 0) + ' шт'].join(' · ')
+  document.getElementById('detail-desc').textContent = item.extra || 'Добавьте заметку, размер упаковки или уточнение по продукту.'
+  const generatedPhoto = attachPhoto(item)
+  const originalPhoto = attachOriginalPhoto(item)
+  document.getElementById('detail-photo').innerHTML =
+    '<div class="original-photo-card"><div class="original-photo-title">Обработанная карточка</div>' +
+    (generatedPhoto ? '<img src="'+generatedPhoto+'" alt="">' : '<div class="detail-photo-placeholder">Просканируйте продукт</div>') +
+    '</div>' +
+    (originalPhoto ? '<div class="original-photo-card"><div class="original-photo-title">Исходное фото камеры</div><img src="'+originalPhoto+'" alt=""></div>' : '')
+  document.getElementById('det-qty').textContent = item.current
+  document.getElementById('det-unit').textContent = 'шт'
+  document.getElementById('det-current-big').textContent = item.current
+  document.getElementById('det-current-of').textContent = 'из ' + item.total + ' шт'
+  document.getElementById('det-rate-label').textContent = 'Текущий расход: ' + Number(item.dailyRate || 0) + ' / день'
+  const ratio = item.total ? item.current / item.total : 0
+  const bar = document.getElementById('det-bar')
+  bar.style.width = Math.max(4, Math.round(ratio * 100)) + '%'
+  bar.className = 'prog-bar-fill' + (getStatus(item) !== 'ok' ? ' warn' : '')
+  document.getElementById('det-days').textContent = getDaysLabel(item)
+  const st = getStatus(item)
+  const stEl = document.getElementById('det-status')
+  stEl.textContent = st === 'urgent' ? 'Срочно купить' : st === 'warn' ? 'Скоро закончится' : 'В запасе'
+  stEl.className = 'prog-status ' + st
+  const favBtn = document.getElementById('det-fav-btn')
+  if(favBtn){
+    favBtn.style.display = ''
+    favBtn.innerHTML = (item.favorite ? 'Убрать из избранного' : 'В избранное') + '<span>' + (item.favorite ? 'Показывать как обычный товар' : 'Быстрый доступ сверху и в аналитике') + '</span>'
+  }
+  const planBtn = document.getElementById('det-plan-btn')
+  if(planBtn){
+    const forced = Boolean(shoppingForced[item.id])
+    planBtn.innerHTML = (forced ? 'Убрать из плана' : 'В план покупок') + '<span>' + (forced ? 'Не держать в покупках вручную' : 'Добавить в покупки даже если остаток нормальный') + '</span>'
+  }
+  renderHistory(item)
+  goTo('detail')
+}
+const openDetailSmartBase = openDetail
+openDetail = function(id){
+  openDetailSmartBase(id)
+  const item = items.find(i => i.id === id)
+  const label = document.getElementById('det-rate-label')
+  if(item && label) label.textContent = smartUsageText(item)
+}
+function openConfirm(){
+  if(!pendingDraft) return
+  qtyMax = pendingDraft.total
+  qtyVal = Math.max(1, Math.floor(pendingDraft.total * 0.65))
+  document.getElementById('conf-place').textContent = pendingDraft.place
+  document.getElementById('conf-product').textContent = pendingDraft.product
+  document.getElementById('conf-brand').textContent = pendingDraft.brand
+  document.getElementById('conf-extra').textContent = pendingDraft.extra
+  document.getElementById('conf-total').textContent = pendingDraft.total + ' шт'
+  updateQtyDisplay()
+  goTo('confirm')
+  startConfirmImageGeneration()
+}
+async function saveConfirmedItem(){
+  if(!pendingDraft){
+    showToast('Нет данных для сохранения')
+    return
+  }
+  if(!pendingImagePair || !pendingImagePair.generated_image){
+    showToast(pendingImageError ? 'AI фото не готово' : 'Фото ещё генерируется')
+    updateConfirmGenerationUI()
+    return
+  }
+  pushUndoState('добавление товара')
+  const imagePair = pendingImagePair
+  const generatedCardPhoto = imagePair.generated_image
+  const thumbPhoto = generatedCardPhoto ? await makeThumbDataUrl(generatedCardPhoto) : ''
+  const originalCameraPhoto = imagePair.original_image || pendingCompressedPhoto || pendingPhoto
+  const createdAtIso = imagePair.created_at || new Date().toISOString()
+  const itemId = String(Date.now())
+  const item = {
+    id: itemId,
+    title: pendingDraft.product,
+    place: pendingDraft.place,
+    product: pendingDraft.product,
+    brand: pendingDraft.brand,
+    extra: pendingDraft.extra,
+    total: Number(pendingDraft.total) || 1,
+    current: Number(qtyVal) || 0,
+    generated_image: generatedCardPhoto,
+    generatedImageId: generatedCardPhoto ? ('p_' + itemId) : '',
+    thumb: thumbPhoto,
+    thumbId: thumbPhoto ? ('t_' + itemId) : '',
+    original_image: originalCameraPhoto,
+    originalImageId: originalCameraPhoto ? ('op_' + itemId) : '',
+    photo: generatedCardPhoto,
+    photoId: generatedCardPhoto ? ('p_' + itemId) : '',
+    originalPhoto: originalCameraPhoto,
+    originalPhotoId: originalCameraPhoto ? ('op_' + itemId) : '',
+    imagePipeline: imagePair.source || 'pollinations_image',
+    usageRateGuess: Number(pendingDraft.usageRateGuess || pendingDraft.usage_rate_guess || 0.4),
+    smartDailyRate: Number(pendingDraft.usageRateGuess || pendingDraft.usage_rate_guess || 0.4),
+    usageConfidence: 'AI оценка',
+    dailyRate: Number(pendingDraft.usageRateGuess || pendingDraft.usage_rate_guess || 0.4),
+    category: pendingDraft.category || inferCategory(pendingDraft),
+    favorite: false,
+    created_at: createdAtIso,
+    createdAt: Date.now(),
+    history: [{type:'created', qty:Number(qtyVal)||0, ts:Date.now()}]
+  }
+  recalculateSmartUsage(item)
+  items.unshift(item)
+  const ok = await saveItems()
+  if(!ok){
+    items.shift()
+    undoStack.pop()
+    return
+  }
+  pendingDraft = null
+  pendingPhoto = ''
+  pendingImageRunId++
+  pendingCompressedPhoto = ''
+  pendingImagePair = null
+  pendingImagePromise = null
+  pendingImageError = null
+  resetCamera()
+  scheduleRenderHome()
+  goTo('home')
+  showToast('Товар добавлен в запасы')
+}
+document.getElementById('manual-photo-input').onchange = e => handleManualPhotoInput(e.target.files?.[0])
+document.querySelectorAll('#filter-bar .filter-chip').forEach(btn => btn.onclick = () => setFilter(btn.dataset.filter))
+document.querySelectorAll('#cat-filter-bar .filter-chip').forEach(btn => btn.onclick = () => { categoryFilter = btn.dataset.filter; renderCategoriesScreen() })
+document.querySelectorAll('#bottom-nav .nav-btn').forEach(btn => btn.onclick = () => goTo(btn.dataset.tab))
+document.getElementById('cam-back-btn').onclick = () => { resetCamera(); goTo('home') }
+document.getElementById('inp-camera').onchange = e => handleFileInput(e.target.files?.[0])
+document.getElementById('inp-gallery').onchange = e => handleFileInput(e.target.files?.[0])
+document.getElementById('cam-reset-btn').onclick = resetCamera
+document.getElementById('cam-recognize-btn').onclick = recognizeProduct
+document.getElementById('conf-back-btn').onclick = () => goTo('camera')
+document.getElementById('conf-save-btn').onclick = saveConfirmedItem
+document.getElementById('qty-minus').onclick = () => { if(qtyVal > 0){ qtyVal--; updateQtyDisplay() } }
+document.getElementById('qty-plus').onclick = () => { if(qtyVal < qtyMax){ qtyVal++; updateQtyDisplay() } }
+document.getElementById('detail-back-btn').onclick = () => { renderHome(); goTo('home') }
+document.getElementById('shopping-back-btn').onclick = () => { renderHome(); goTo('home') }
+document.getElementById('manual-back-btn').onclick = () => { if(editingItemId && currentItemId){ openDetail(currentItemId) } else { goTo('home') } }
+document.getElementById('manual-save-btn').onclick = saveManualForm
+document.getElementById('det-use-btn').onclick = useCurrent
+document.getElementById('det-edit-btn').onclick = () => openManualEdit(currentItemId)
+document.getElementById('det-buy-btn').onclick = buyCurrent
+if(document.getElementById('det-fav-btn')) document.getElementById('det-fav-btn').onclick = toggleFavoriteCurrent
+document.getElementById('det-del-btn').onclick = deleteCurrent
+if(document.getElementById('save-template-btn')) document.getElementById('save-template-btn').onclick = saveCurrentAsTemplate
+function renderConfirmEditableFields(){
+  const set = (id, html) => { const el = document.getElementById(id); if(el) el.innerHTML = html }
+  set('conf-place', '<input class="confirm-edit-input" id="conf-place-input" value="'+escapeAttr(pendingDraft.place || 'Дом')+'">')
+  set('conf-product', '<input class="confirm-edit-input" id="conf-product-input" value="'+escapeAttr(pendingDraft.product || 'Товар')+'">')
+  set('conf-brand', '<input class="confirm-edit-input" id="conf-brand-input" value="'+escapeAttr(pendingDraft.brand || 'Без бренда')+'">')
+  set('conf-extra', '<input class="confirm-edit-input" id="conf-extra-input" value="'+escapeAttr(pendingDraft.extra || '')+'">')
+  set('conf-total', '<input class="confirm-edit-input small" id="conf-total-input" type="number" min="1" value="'+escapeAttr(pendingDraft.total || 1)+'">')
+  const fields = document.querySelector('#s-confirm .confirm-fields')
+  if(fields && !document.getElementById('conf-prompt-box')){
+    fields.insertAdjacentHTML('afterbegin', '<div class="confirm-prompt-box" id="conf-prompt-box"><div class="field-label">Уточнение для AI фото</div><textarea id="conf-prompt-hint" placeholder="Например: это жёлтый спрей Sol de Janeiro, прозрачный флакон, белая крышка"></textarea><button class="mini-action" id="conf-regenerate-btn" type="button">Перегенерировать фото</button></div>')
+    document.getElementById('conf-regenerate-btn').onclick = () => {
+      getConfirmDraftFromInputs()
+      startConfirmImageGeneration()
+    }
+  }
+}
+function escapeAttr(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
+}
+function openConfirm(){
+  if(!pendingDraft) return
+  qtyMax = Number(pendingDraft.total) || 1
+  qtyVal = Math.max(1, Math.floor(qtyMax * 0.65))
+  renderConfirmEditableFields()
+  updateQtyDisplay()
+  goTo('confirm')
+  startConfirmImageGeneration()
+}
+async function startConfirmImageGeneration(){
+  const runId = ++pendingImageRunId
+  getConfirmDraftFromInputs()
+  pendingImagePair = null
+  pendingImageError = null
+  pendingImagePromise = null
+  pendingCompressedPhoto = pendingPhoto || ''
+  updateConfirmGenerationUI()
+  try{
+    if(pendingCompressedPhoto && String(pendingCompressedPhoto).startsWith('data:')){
+      pendingCompressedPhoto = await compressImageDataUrl(pendingCompressedPhoto, 680, 0.62)
+    }
+    if(runId !== pendingImageRunId) return
+    pendingImagePromise = generateProductImages(pendingCompressedPhoto, pendingDraft)
+    const result = await pendingImagePromise
+    if(runId !== pendingImageRunId) return
+    pendingImagePair = result
+    pendingImageError = null
+    updateConfirmGenerationUI()
+    showToast('AI фото готово')
+  }catch(e){
+    if(runId !== pendingImageRunId) return
+    pendingImagePair = null
+    pendingImageError = e && e.message ? e.message : 'Не удалось сгенерировать фото'
+    updateConfirmGenerationUI()
+  }finally{
+    if(runId === pendingImageRunId) pendingImagePromise = null
+  }
+}
+async function saveConfirmedItem(){
+  if(!pendingDraft){
+    showToast('Нет данных для сохранения')
+    return
+  }
+  getConfirmDraftFromInputs()
+  if(!pendingImagePair || !pendingImagePair.generated_image){
+    showToast(pendingImageError ? 'AI фото не готово' : 'Фото ещё генерируется')
+    updateConfirmGenerationUI()
+    return
+  }
+  pushUndoState('добавление товара')
+  const imagePair = pendingImagePair
+  const generatedCardPhoto = imagePair.generated_image
+  const thumbPhoto = generatedCardPhoto ? await makeThumbDataUrl(generatedCardPhoto) : ''
+  const originalCameraPhoto = imagePair.original_image || pendingCompressedPhoto || pendingPhoto
+  const createdAtIso = imagePair.created_at || new Date().toISOString()
+  const itemId = String(Date.now())
+  const item = {
+    id: itemId,
+    title: pendingDraft.product,
+    place: pendingDraft.place,
+    product: pendingDraft.product,
+    brand: pendingDraft.brand,
+    extra: pendingDraft.extra,
+    total: Number(pendingDraft.total) || 1,
+    current: Number(qtyVal) || 0,
+    generated_image: generatedCardPhoto,
+    generatedImageId: generatedCardPhoto ? ('p_' + itemId) : '',
+    thumb: thumbPhoto,
+    thumbId: thumbPhoto ? ('t_' + itemId) : '',
+    original_image: originalCameraPhoto,
+    originalImageId: originalCameraPhoto ? ('op_' + itemId) : '',
+    photo: generatedCardPhoto,
+    photoId: generatedCardPhoto ? ('p_' + itemId) : '',
+    originalPhoto: originalCameraPhoto,
+    originalPhotoId: originalCameraPhoto ? ('op_' + itemId) : '',
+    imagePipeline: imagePair.source || 'pollinations_image',
+    dailyRate: 0.4,
+    category: pendingDraft.category || inferCategory(pendingDraft),
+    favorite: false,
+    created_at: createdAtIso,
+    createdAt: Date.now(),
+    history: [{type:'created', qty:Number(qtyVal)||0, ts:Date.now()}]
+  }
+  items.unshift(item)
+  const ok = await saveItems()
+  if(!ok){
+    items.shift()
+    undoStack.pop()
+    return
+  }
+  pendingDraft = null
+  pendingPhoto = ''
+  pendingImageRunId++
+  pendingCompressedPhoto = ''
+  pendingImagePair = null
+  pendingImagePromise = null
+  pendingImageError = null
+  resetCamera()
+  scheduleRenderHome()
+  goTo('home')
+  showToast('Товар добавлен в запасы')
+}
+async function regenerateCurrentPhoto(){
+  const item = items.find(i => i.id === currentItemId)
+  if(!item) return
+  const original = attachOriginalPhoto(item)
+  if(!original){
+    showToast('Нет исходного фото')
+    return
+  }
+  const hint = prompt('Уточнение для нового AI фото', item.promptHint || '')
+  pushUndoState('перегенерация фото')
+  showToast('Генерирую новое фото...')
+  try{
+    const pair = await generateProductImages(original, {...item, promptHint: hint || ''})
+    const thumb = await makeThumbDataUrl(pair.generated_image)
+    item.generated_image = pair.generated_image
+    item.photo = pair.generated_image
+    item.thumb = thumb
+    item.promptHint = hint || ''
+    await saveItems()
+    openDetail(item.id)
+    scheduleRenderHome()
+    showToast('Фото обновлено')
+  }catch(e){
+    undoStack.pop()
+    showToast(e.message || 'Не удалось обновить фото')
+  }
+}
+function ensureRegenerateButton(){
+  const grid = document.querySelector('#s-detail .action-grid')
+  if(!grid || document.getElementById('det-regen-btn')) return
+  const btn = document.createElement('button')
+  btn.className = 'action-btn'
+  btn.id = 'det-regen-btn'
+  btn.innerHTML = 'Перегенерировать фото<span>Новый вариант AI</span>'
+  grid.insertBefore(btn, document.getElementById('det-del-btn'))
+  btn.onclick = regenerateCurrentPhoto
+}
+const openDetailBaseForRegen = openDetail
+openDetail = function(id){
+  openDetailBaseForRegen(id)
+  ensureRegenerateButton()
+}
+async function migrateExistingThumbnails(){
+  let changed = false
+  for(const item of items || []){
+    if(item.thumbId || item.thumb) continue
+    const src = attachPhoto(item)
+    if(!src || !String(src).startsWith('data:')) continue
+    item.thumb = await makeThumbDataUrl(src)
+    changed = true
+  }
+  if(changed){
+    await saveItems()
+    scheduleRenderHome()
+  }
+}
+function ensureV3HomeShell(){
+  document.body.classList.add('v3-home')
+  const section = document.querySelector('#s-home .section-header')
+  if(section && !document.getElementById('v3-toolbar')){
+    section.insertAdjacentHTML('beforebegin',
+      '<div class="v3-toolbar" id="v3-toolbar">'+
+        '<div class="v3-toolbar-row"><input id="v3-search" placeholder="Поиск по запасам"><select id="v3-sort"><option value="status">Сначала важное</option><option value="name">По названию</option><option value="brand">По бренду</option><option value="place">По месту</option><option value="stock">По остатку</option><option value="date">Сначала новые</option></select></div>'+
+        '<div class="v3-chip-row" id="v3-chips"></div>'+
+      '</div>')
+    document.getElementById('v3-search').value = searchQuery || ''
+    document.getElementById('v3-sort').value = sortMode || 'status'
+    document.getElementById('v3-search').oninput = e => { searchQuery = e.target.value.trim(); scheduleRenderHome() }
+    document.getElementById('v3-sort').onchange = e => { sortMode = e.target.value; scheduleRenderHome() }
+  }
+}
+function renderV3Chips(){
+  const el = document.getElementById('v3-chips')
+  if(!el) return
+  const cats = ['all', ...Array.from(new Set(items.map(i => i.category || inferCategory(i)).filter(Boolean))).slice(0,8)]
+  el.innerHTML = cats.map(cat => '<button class="v3-chip '+(activeCategory === cat ? 'active' : '')+'" data-v3-cat="'+cat+'">'+(cat === 'all' ? 'Все' : cat)+'</button>').join('')
+  el.querySelectorAll('[data-v3-cat]').forEach(btn => btn.onclick = () => { activeCategory = btn.dataset.v3Cat; scheduleRenderHome() })
+}
+function renderItemCardMarkup(item, options = {}){
+  const status = getStatus(item)
+  const statusLabel = status === 'urgent' ? 'Срочно' : status === 'warn' ? 'Скоро' : 'В норме'
+  const thumbSrc = attachThumb(item)
+  const thumb = thumbSrc ? '<img src="'+thumbSrc+'" alt="">' : fallbackThumb(item)
+  const checked = Boolean(options.checked)
+  const shoppingCheck = options.withCheck ? '<input class="shopping-check" type="checkbox" data-check-id="'+item.id+'" '+(checked ? 'checked' : '')+'>' : ''
+  const stockCheck = options.selectMode ? '<input class="select-check" type="checkbox" data-select-id="'+item.id+'" '+(selectedStockIds[item.id] ? 'checked' : '')+'>' : ''
+  const ratio = Math.max(0, Math.min(1, Number(item.current || 0) / Math.max(1, Number(item.total || 1))))
+  const pct = Math.max(4, Math.round(ratio * 100))
+  return '<div class="item-card v3-card status-'+status+(checked ? ' checked-item' : '')+(options.selectMode ? ' selecting' : '')+'" data-id="'+item.id+'">'+
+    '<div class="v3-card-media">'+thumb+'<div class="v3-card-status"><div class="item-status-chip '+status+'">'+statusLabel+'</div></div>'+(shoppingCheck || stockCheck ? '<div style="position:absolute;right:14px;top:14px">'+shoppingCheck+stockCheck+'</div>' : '')+'</div>'+
+    '<div class="v3-card-body">'+
+      '<div class="v3-card-title">'+escapeAttr(item.product || item.title || 'Товар')+'</div>'+
+      '<div class="v3-card-meta">'+escapeAttr([item.brand || 'Без бренда', item.category || inferCategory(item), item.place || 'Дом'].filter(Boolean).join(' · '))+'</div>'+
+      '<div class="v3-progress '+status+'"><span style="width:'+pct+'%"></span></div>'+
+      '<div class="v3-card-foot"><div><div class="v3-stock-num">'+Number(item.current || 0)+'</div><div class="v3-stock-label">из '+Number(item.total || 1)+' шт</div></div><div class="v3-days">'+getDaysLabel(item)+'</div></div>'+
+      '<div class="v3-quick-actions"><button data-quick-use="'+item.id+'">−1 использовал</button><button class="buy" data-quick-buy="'+item.id+'">Купил</button></div>'+
+    '</div></div>'
+}
+function bindV3CardActions(list){
+  list.querySelectorAll('[data-quick-use]').forEach(btn => btn.onclick = async e => {
+    e.stopPropagation()
+    await quickUseItem(btn.dataset.quickUse)
+    scheduleRenderHome()
+  })
+  list.querySelectorAll('[data-quick-buy]').forEach(btn => btn.onclick = async e => {
+    e.stopPropagation()
+    await quickBuyItem(btn.dataset.quickBuy)
+    scheduleRenderHome()
+  })
+}
+async function quickUseItem(id){
+  const idx = items.findIndex(i => i.id === id)
+  if(idx < 0) return
+  if(Number(items[idx].current || 0) <= 0){
+    showToast('Товар уже закончился')
+    return
+  }
+  pushUndoState('изменение остатка')
+  items[idx].current = Math.max(0, Number(items[idx].current || 0) - 1)
+  if(!Array.isArray(items[idx].history)) items[idx].history = []
+  items[idx].history.push({type:'used', qty:1, ts:Date.now()})
+  recalculateSmartUsage(items[idx])
+  await saveItems()
+  showToast('−1 записано')
+}
+async function quickBuyItem(id){
+  const idx = items.findIndex(i => i.id === id)
+  if(idx < 0) return
+  pushUndoState('пополнение запаса')
+  items[idx].current = Number(items[idx].total || items[idx].current || 1)
+  if(!Array.isArray(items[idx].history)) items[idx].history = []
+  items[idx].history.push({type:'bought', qty:items[idx].current, ts:Date.now()})
+  recalculateSmartUsage(items[idx])
+  await saveItems()
+  showToast('Запас пополнен')
+}
+function renderHome(){
+  ensureV3HomeShell()
+  renderV3Chips()
+  const list = document.getElementById('items-list')
+  const plan = getShoppingPlan()
+  const warns = items.filter(i => getStatus(i) === 'warn')
+  const urgents = items.filter(i => getStatus(i) === 'urgent')
+  document.getElementById('sum-total').textContent = items.length
+  document.getElementById('sum-warn').textContent = warns.length
+  document.getElementById('sum-urgent').textContent = urgents.length
+  updateShoppingBannerV2(plan)
+  updateStockSelectionToolbar()
+  if(!items.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">📦</div><div class="empty-text">Пока нет товаров</div><div class="empty-sub">Нажми большой + и добавь первый продукт</div></div>'
+    return
+  }
+  const sorted = applyItemFilters(items)
+  if(!sorted.length){
+    list.innerHTML = '<div class="empty-state"><div class="empty-icon">⌕</div><div class="empty-text">Ничего не найдено</div><div class="empty-sub">Попробуй другой поиск или категорию</div></div>'
+    return
+  }
+  list.innerHTML = '<div class="v3-section-title">Все запасы</div>' + sorted.map(item => renderItemCardMarkup(item, {selectMode:stockSelectionMode})).join('')
+  list.querySelectorAll('[data-select-id]').forEach(el => {
+    el.onclick = e => e.stopPropagation()
+    el.onchange = e => {
+      selectedStockIds[el.dataset.selectId] = e.target.checked
+      updateStockSelectionToolbar()
+      renderHome()
+    }
+  })
+  bindV3CardActions(list)
+  list.querySelectorAll('.item-card').forEach(el => {
+    el.onclick = () => {
+      if(stockSelectionMode){
+        selectedStockIds[el.dataset.id] = !selectedStockIds[el.dataset.id]
+        updateStockSelectionToolbar()
+        renderHome()
+      }else openDetail(el.dataset.id)
+    }
+  })
+}
+function simpleDaysText(item){
+  const days = getDaysLeft(item)
+  if(days === null || days === undefined) return 'хватит надолго'
+  if(days <= 0) return 'уже закончилось'
+  if(days === 1) return 'примерно на 1 день'
+  if(days <= 3) return 'на ' + days + ' дня'
+  return 'на ' + days + ' дней'
+}
+function renderAnalytics(){
+  const screen = document.getElementById('s-analytics')
+  if(!screen) return
+  const urgent = items.filter(i => getStatus(i) === 'urgent')
+  const warn = items.filter(i => getStatus(i) === 'warn')
+  const ok = items.filter(i => getStatus(i) === 'ok')
+  const needBuy = [...urgent, ...warn].sort((a,b) => (getDaysLeft(a) ?? 999) - (getDaysLeft(b) ?? 999))
+  const soon = items.filter(i => (getDaysLeft(i) ?? 999) <= 3)
+  const totalLeft = items.reduce((sum,i) => sum + Number(i.current || 0), 0)
+  const topLine = !items.length
+    ? 'Пока пусто'
+    : urgent.length
+      ? 'Нужно купить сейчас'
+      : warn.length
+        ? 'Есть товары на подходе'
+        : 'Дома всё спокойно'
+  const subLine = !items.length
+    ? 'Добавь первый товар, и я объясню простыми словами, что дома заканчивается.'
+    : urgent.length
+      ? 'Красные товары почти закончились. Начни с них.'
+      : warn.length
+        ? 'Жёлтые товары скоро закончатся. Их лучше купить заранее.'
+        : 'Срочных покупок нет. Можно просто следить за запасами.'
+  const categories = getAllCategories().filter(c => c !== 'all' && c !== 'Избранное').map(cat => {
+    const catItems = items.filter(i => (i.category || inferCategory(i)) === cat)
+    const risk = catItems.filter(i => ['warn','urgent'].includes(getStatus(i))).length
+    return {cat, count:catItems.length, risk}
+  }).filter(x => x.count).sort((a,b) => b.risk - a.risk || b.count - a.count).slice(0,6)
+  screen.innerHTML =
+    '<div class="detail-header safe-top"><div class="confirm-title">Аналитика</div></div>'+
+    '<div class="simple-analytics">'+
+      '<div class="simple-hero"><div class="simple-kicker">Что происходит дома</div><div class="simple-title">'+topLine+'</div><div class="simple-sub">'+subLine+'</div></div>'+
+      '<div class="simple-grid">'+
+        '<div class="simple-card"><div class="simple-num">'+items.length+'</div><div class="simple-label">товаров под контролем</div><div class="simple-help">Это все запасы, которые ты добавил.</div></div>'+
+        '<div class="simple-card"><div class="simple-num">'+needBuy.length+'</div><div class="simple-label">нужно купить</div><div class="simple-help">Красные и жёлтые товары.</div></div>'+
+        '<div class="simple-card"><div class="simple-num">'+soon.length+'</div><div class="simple-label">закончатся за 3 дня</div><div class="simple-help">Лучше не тянуть.</div></div>'+
+        '<div class="simple-card"><div class="simple-num">'+totalLeft+'</div><div class="simple-label">штук осталось всего</div><div class="simple-help">Сумма остатков по всем товарам.</div></div>'+
+      '</div>'+
+      '<div class="simple-card"><div class="analytics-label">Что купить первым</div>'+renderSimpleNeedList(needBuy)+'</div>'+
+      '<div class="simple-card"><div class="analytics-label">Категории простыми словами</div>'+renderSimpleCategoryList(categories)+'</div>'+
+      '<div class="simple-note">Как читать: красное значит “почти нет”, жёлтое значит “скоро закончится”, зелёное значит “всё нормально”. Если сомневаешься, открой “Покупки” — там готовый список.</div>'+
+    '</div>'
+  screen.querySelectorAll('[data-analytics-id]').forEach(el => el.onclick = () => openDetail(el.dataset.analyticsId))
+}
+function renderSimpleNeedList(list){
+  if(!list.length) return '<div class="simple-list"><div class="simple-row"><div class="simple-dot">✓</div><div><div class="simple-row-title">Покупать пока ничего не нужно</div><div class="simple-row-sub">Все товары в норме.</div></div><div class="simple-pill ok">ок</div></div></div>'
+  return '<div class="simple-list">'+list.slice(0,6).map(item => {
+    const st = getStatus(item)
+    return '<div class="simple-row" data-analytics-id="'+item.id+'"><div class="simple-dot">'+escapeAttr(String(item.product || '?').slice(0,1).toUpperCase())+'</div><div><div class="simple-row-title">'+escapeAttr(item.product || 'Товар')+'</div><div class="simple-row-sub">'+escapeAttr(item.brand || 'Без бренда')+' · осталось '+Number(item.current || 0)+' из '+Number(item.total || 1)+' · '+simpleDaysText(item)+'</div></div><div class="simple-pill '+(st === 'urgent' ? 'urgent' : '')+'">'+(st === 'urgent' ? 'срочно' : 'скоро')+'</div></div>'
+  }).join('')+'</div>'
+}
+function renderSimpleCategoryList(categories){
+  if(!categories.length) return '<div class="simple-list"><div class="simple-row"><div class="simple-dot">+</div><div><div class="simple-row-title">Категории появятся сами</div><div class="simple-row-sub">Добавь товары: ванная, кухня, еда, уборка.</div></div><div class="simple-pill">пусто</div></div></div>'
+  return '<div class="simple-list">'+categories.map(x => '<div class="simple-row"><div class="simple-dot">'+escapeAttr(x.cat.slice(0,1).toUpperCase())+'</div><div><div class="simple-row-title">'+escapeAttr(x.cat)+'</div><div class="simple-row-sub">'+x.count+' товаров · '+(x.risk ? x.risk+' требуют внимания' : 'всё спокойно')+'</div></div><div class="simple-pill '+(x.risk ? 'urgent' : 'ok')+'">'+(x.risk ? 'проверь' : 'ок')+'</div></div>').join('')+'</div>'
+}
+if(document.getElementById('install-btn')) document.getElementById('install-btn').onclick = async () => {
+  if(installPromptEvent){
+    installPromptEvent.prompt()
+    await installPromptEvent.userChoice
+  }else{
+    showToast('Открой меню браузера и выбери "На экран домой"')
+  }
+}
+document.getElementById('det-minus3').onclick = () => changeCurrent(-3)
+document.getElementById('det-minus1').onclick = () => changeCurrent(-1)
+document.getElementById('det-plus1').onclick = () => changeCurrent(1)
+document.getElementById('det-plus3').onclick = () => changeCurrent(3)
+document.getElementById('rate-01').onclick = () => setDailyRate(0.1)
+document.getElementById('rate-03').onclick = () => setDailyRate(0.3)
+document.getElementById('rate-05').onclick = () => setDailyRate(0.5)
+document.getElementById('rate-10').onclick = () => setDailyRate(1.0)
+
+normalizeItems()
+updateFilterChips()
+  renderCategoryChips()
+  renderCategoriesScreen()
+  renderTemplates()
+scheduleRenderHome()
+loadServerInfo()
+setTimeout(() => migrateExistingThumbnails().catch(() => {}), 1200)
+loadServerState()
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault()
+  installPromptEvent = e
+})
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}))
+}
+const demoCard = document.querySelector('.demo-product')
+if(demoCard) demoCard.innerHTML = '<div class="dp-brand">SCAN</div><div class="scan-hint">Просканируйте продукт</div><div class="scan-subhint">камера или галерея</div>'
+window.addEventListener('focus', () => {
+  loadServerInfo()
+  if(serverLoadDone) loadServerState()
+})
+</script>
+</body>
+</html>
