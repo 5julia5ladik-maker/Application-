@@ -2,6 +2,14 @@
 
 Home inventory web app with AI camera, product cards, shopping plan, analytics, categories, import/export, and PWA support.
 
+## Live App
+
+Railway production URL:
+
+```text
+https://web-production-5fee.up.railway.app
+```
+
 ## Project Files
 
 - `app.py` - FastAPI backend.
