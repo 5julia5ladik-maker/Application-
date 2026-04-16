@@ -1,10 +1,13 @@
 import base64
 import hashlib
 import html
+import hmac
 import imghdr
 import json
 import os
+import secrets
 import socket
+import sqlite3
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -12,10 +15,17 @@ from urllib.parse import quote_plus
 
 import requests
 from requests.adapters import HTTPAdapter
-from fastapi import Body, FastAPI, File, Form, UploadFile
+from fastapi import Body, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from urllib3.util.retry import Retry
+
+try:
+    import psycopg
+    from psycopg.rows import dict_row
+except ImportError:  # pragma: no cover - optional until DATABASE_URL is configured
+    psycopg = None
+    dict_row = None
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -26,8 +36,16 @@ SERVICE_WORKER_FILE = BASE_DIR / "sw.js"
 DATA_DIR = BASE_DIR / "data"
 STATE_FILE = DATA_DIR / "state.json"
 IMAGE_CACHE_FILE = DATA_DIR / "image_cache.json"
+SQLITE_DB_FILE = DATA_DIR / "homestock.db"
 KEY_FILE = BASE_DIR / "gemini_api_key.txt"
 POLLINATIONS_KEY_FILE = BASE_DIR / "pollinations_api_key.txt"
+DATABASE_URL = os.getenv("DATABASE_URL", "").strip()
+SECRET_KEY = os.getenv("SECRET_KEY", "local-dev-secret-change-me")
+SESSION_COOKIE = "homestock_session"
+SESSION_COOKIE_SECURE = (
+    os.getenv("SESSION_COOKIE_SECURE", "1" if os.getenv("RAILWAY_ENVIRONMENT") else "0").strip()
+    == "1"
+)
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_RECOGNITION_MODELS = [
     model.strip()
@@ -661,6 +679,278 @@ def fallback_recognition(reason: str = "") -> dict:
     }
 
 
+def utc_now() -> str:
+    return datetime.now(timezone.utc).isoformat()
+
+
+def is_postgres() -> bool:
+    return bool(DATABASE_URL)
+
+
+def db_connect():
+    if is_postgres():
+        if psycopg is None:
+            raise RuntimeError("DATABASE_URL is set but psycopg is not installed")
+        return psycopg.connect(DATABASE_URL, row_factory=dict_row)
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(SQLITE_DB_FILE)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+def db_sql(sql: str) -> str:
+    return sql.replace("?", "%s") if is_postgres() else sql
+
+
+DB_READY = False
+
+
+def db_execute(sql: str, params: tuple = ()) -> None:
+    ensure_database()
+    with db_connect() as conn:
+        conn.execute(db_sql(sql), params)
+        conn.commit()
+
+
+def db_one(sql: str, params: tuple = ()) -> dict | None:
+    ensure_database()
+    with db_connect() as conn:
+        row = conn.execute(db_sql(sql), params).fetchone()
+        return dict(row) if row else None
+
+
+def db_all(sql: str, params: tuple = ()) -> list[dict]:
+    ensure_database()
+    with db_connect() as conn:
+        rows = conn.execute(db_sql(sql), params).fetchall()
+        return [dict(row) for row in rows]
+
+
+def init_database() -> None:
+    global DB_READY
+    statements = [
+        """
+        CREATE TABLE IF NOT EXISTS users (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            name TEXT NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS sessions (
+            token_hash TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            expires_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS households (
+            id TEXT PRIMARY KEY,
+            name TEXT NOT NULL,
+            invite_code TEXT UNIQUE NOT NULL,
+            created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS household_members (
+            household_id TEXT NOT NULL,
+            user_id TEXT NOT NULL,
+            role TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY (household_id, user_id)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS household_states (
+            household_id TEXT PRIMARY KEY,
+            items_json TEXT NOT NULL,
+            photos_json TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+    ]
+    with db_connect() as conn:
+        for statement in statements:
+            conn.execute(statement)
+        conn.commit()
+    DB_READY = True
+
+
+def ensure_database() -> None:
+    if not DB_READY:
+        init_database()
+
+
+@app.on_event("startup")
+def startup() -> None:
+    init_database()
+
+
+def normalize_email(email: str) -> str:
+    return (email or "").strip().lower()
+
+
+def hash_password(password: str) -> str:
+    salt = secrets.token_hex(16)
+    rounds = 220000
+    digest = hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt.encode("utf-8"),
+        rounds,
+    ).hex()
+    return f"pbkdf2_sha256${rounds}${salt}${digest}"
+
+
+def verify_password(password: str, stored: str) -> bool:
+    try:
+        algo, rounds_raw, salt, digest = stored.split("$", 3)
+        if algo != "pbkdf2_sha256":
+            return False
+        candidate = hashlib.pbkdf2_hmac(
+            "sha256",
+            password.encode("utf-8"),
+            salt.encode("utf-8"),
+            int(rounds_raw),
+        ).hex()
+        return hmac.compare_digest(candidate, digest)
+    except (ValueError, TypeError):
+        return False
+
+
+def session_hash(token: str) -> str:
+    return hashlib.sha256((SECRET_KEY + token).encode("utf-8")).hexdigest()
+
+
+def create_session(user_id: str) -> str:
+    token = secrets.token_urlsafe(40)
+    token_hash = session_hash(token)
+    now_ts = int(time.time())
+    db_execute(
+        "INSERT INTO sessions (token_hash, user_id, created_at, expires_at) VALUES (?, ?, ?, ?)",
+        (
+            token_hash,
+            user_id,
+            utc_now(),
+            datetime.fromtimestamp(now_ts + 60 * 60 * 24 * 90, timezone.utc).isoformat(),
+        ),
+    )
+    return token
+
+
+def set_session_cookie(response: JSONResponse, token: str) -> None:
+    response.set_cookie(
+        key=SESSION_COOKIE,
+        value=token,
+        max_age=60 * 60 * 24 * 90,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+    )
+
+
+def clear_session_cookie(response: JSONResponse) -> None:
+    response.delete_cookie(
+        key=SESSION_COOKIE,
+        httponly=True,
+        secure=SESSION_COOKIE_SECURE,
+        samesite="lax",
+    )
+
+
+def get_current_context(request: Request) -> dict | None:
+    token = request.cookies.get(SESSION_COOKIE, "")
+    if not token:
+        return None
+
+    row = db_one(
+        """
+        SELECT u.id AS user_id, u.email, u.name, hm.household_id, hm.role, h.name AS household_name
+        FROM sessions s
+        JOIN users u ON u.id = s.user_id
+        LEFT JOIN household_members hm ON hm.user_id = u.id
+        LEFT JOIN households h ON h.id = hm.household_id
+        WHERE s.token_hash = ? AND s.expires_at > ?
+        ORDER BY hm.created_at ASC
+        LIMIT 1
+        """,
+        (session_hash(token), utc_now()),
+    )
+    return row
+
+
+def require_context(request: Request) -> dict | JSONResponse:
+    context = get_current_context(request)
+    if not context:
+        return JSONResponse(status_code=401, content={"ok": False, "error": "AUTH_REQUIRED"})
+    return context
+
+
+def default_state() -> dict:
+    return {"items": [], "photos": {}}
+
+
+def get_household_state(household_id: str) -> dict:
+    row = db_one(
+        "SELECT items_json, photos_json FROM household_states WHERE household_id = ?",
+        (household_id,),
+    )
+    if not row:
+        return default_state()
+    try:
+        return {
+            "items": json.loads(row.get("items_json") or "[]"),
+            "photos": json.loads(row.get("photos_json") or "{}"),
+        }
+    except json.JSONDecodeError:
+        return default_state()
+
+
+def save_household_state(household_id: str, payload: dict) -> None:
+    items = payload.get("items") if isinstance(payload.get("items"), list) else []
+    photos = payload.get("photos") if isinstance(payload.get("photos"), dict) else {}
+    existing = db_one(
+        "SELECT household_id FROM household_states WHERE household_id = ?",
+        (household_id,),
+    )
+    if existing:
+        db_execute(
+            """
+            UPDATE household_states
+            SET items_json = ?, photos_json = ?, updated_at = ?
+            WHERE household_id = ?
+            """,
+            (json.dumps(items, ensure_ascii=False), json.dumps(photos, ensure_ascii=False), utc_now(), household_id),
+        )
+    else:
+        db_execute(
+            """
+            INSERT INTO household_states (household_id, items_json, photos_json, updated_at)
+            VALUES (?, ?, ?, ?)
+            """,
+            (household_id, json.dumps(items, ensure_ascii=False), json.dumps(photos, ensure_ascii=False), utc_now()),
+        )
+
+
+def create_household_for_user(user_id: str, name: str) -> str:
+    household_id = "hh_" + secrets.token_urlsafe(12)
+    invite_code = secrets.token_urlsafe(8).replace("-", "").replace("_", "")[:10].upper()
+    now = utc_now()
+    db_execute(
+        "INSERT INTO households (id, name, invite_code, created_at) VALUES (?, ?, ?, ?)",
+        (household_id, name, invite_code, now),
+    )
+    db_execute(
+        "INSERT INTO household_members (household_id, user_id, role, created_at) VALUES (?, ?, ?, ?)",
+        (household_id, user_id, "owner", now),
+    )
+    return household_id
+
+
 def load_state() -> dict:
     if not STATE_FILE.exists():
         return {"items": [], "photos": {}}
@@ -850,6 +1140,9 @@ def health():
         "ok": True,
         "frontend_found": FRONTEND_FILE.exists(),
         "state_found": STATE_FILE.exists(),
+        "database": "postgres" if is_postgres() else "sqlite-volume",
+        "auth_enabled": True,
+        "session_cookie_secure": SESSION_COOKIE_SECURE,
         "key_set": bool(GEMINI_API_KEY),
         "model": GEMINI_MODEL,
         "recognition_models": GEMINI_RECOGNITION_MODELS,
@@ -874,9 +1167,136 @@ def health():
     }
 
 
+@app.post("/api/auth/register")
+def auth_register(payload: dict = Body(...)):
+    email = normalize_email(str(payload.get("email") or ""))
+    password = str(payload.get("password") or "")
+    name = str(payload.get("name") or email.split("@")[0] or "User").strip()[:80]
+    household_name = str(payload.get("household_name") or "Мой дом").strip()[:80]
+
+    if "@" not in email or len(password) < 6:
+        return JSONResponse(
+            status_code=400,
+            content={"ok": False, "error": "Введите email и пароль минимум 6 символов"},
+        )
+
+    if db_one("SELECT id FROM users WHERE email = ?", (email,)):
+        return JSONResponse(
+            status_code=409,
+            content={"ok": False, "error": "Такой email уже зарегистрирован"},
+        )
+
+    user_id = "usr_" + secrets.token_urlsafe(12)
+    db_execute(
+        "INSERT INTO users (id, email, password_hash, name, created_at) VALUES (?, ?, ?, ?, ?)",
+        (user_id, email, hash_password(password), name, utc_now()),
+    )
+    household_id = create_household_for_user(user_id, household_name)
+    save_household_state(household_id, load_state())
+    token = create_session(user_id)
+    response = JSONResponse({"ok": True, "user": {"email": email, "name": name}})
+    set_session_cookie(response, token)
+    return response
+
+
+@app.post("/api/auth/login")
+def auth_login(payload: dict = Body(...)):
+    email = normalize_email(str(payload.get("email") or ""))
+    password = str(payload.get("password") or "")
+    user = db_one("SELECT id, email, password_hash, name FROM users WHERE email = ?", (email,))
+    if not user or not verify_password(password, user["password_hash"]):
+        return JSONResponse(
+            status_code=401,
+            content={"ok": False, "error": "Неверный email или пароль"},
+        )
+
+    token = create_session(user["id"])
+    response = JSONResponse({"ok": True, "user": {"email": user["email"], "name": user["name"]}})
+    set_session_cookie(response, token)
+    return response
+
+
+@app.post("/api/auth/logout")
+def auth_logout(request: Request):
+    token = request.cookies.get(SESSION_COOKIE, "")
+    if token:
+        db_execute("DELETE FROM sessions WHERE token_hash = ?", (session_hash(token),))
+    response = JSONResponse({"ok": True})
+    clear_session_cookie(response)
+    return response
+
+
+@app.get("/api/auth/me")
+def auth_me(request: Request):
+    context = get_current_context(request)
+    if not context:
+        return {"ok": True, "authenticated": False}
+    return {
+        "ok": True,
+        "authenticated": True,
+        "user": {
+            "id": context["user_id"],
+            "email": context["email"],
+            "name": context["name"],
+        },
+        "household": {
+            "id": context["household_id"],
+            "name": context["household_name"],
+            "role": context["role"],
+        },
+    }
+
+
+@app.get("/api/household/invite")
+def household_invite(request: Request):
+    context = require_context(request)
+    if isinstance(context, JSONResponse):
+        return context
+    row = db_one(
+        "SELECT invite_code FROM households WHERE id = ?",
+        (context["household_id"],),
+    )
+    return {"ok": True, "invite_code": row["invite_code"] if row else ""}
+
+
+@app.post("/api/household/join")
+def household_join(request: Request, payload: dict = Body(...)):
+    context = require_context(request)
+    if isinstance(context, JSONResponse):
+        return context
+
+    code = str(payload.get("invite_code") or "").strip().upper()
+    household = db_one("SELECT id, name FROM households WHERE invite_code = ?", (code,))
+    if not household:
+        return JSONResponse(status_code=404, content={"ok": False, "error": "Код дома не найден"})
+
+    existing = db_one(
+        "SELECT household_id FROM household_members WHERE household_id = ? AND user_id = ?",
+        (household["id"], context["user_id"]),
+    )
+    if not existing:
+        db_execute(
+            "INSERT INTO household_members (household_id, user_id, role, created_at) VALUES (?, ?, ?, ?)",
+            (household["id"], context["user_id"], "member", utc_now()),
+        )
+    return {"ok": True, "household": {"id": household["id"], "name": household["name"]}}
+
+
 @app.get("/api/state")
-def get_state():
-    return load_state()
+def get_state(request: Request):
+    context = get_current_context(request)
+    if context and context.get("household_id"):
+        state = get_household_state(context["household_id"])
+        state["cloud"] = True
+        state["household"] = {
+            "id": context["household_id"],
+            "name": context["household_name"],
+            "role": context["role"],
+        }
+        return state
+    state = load_state()
+    state["cloud"] = False
+    return state
 
 
 @app.get("/api/info")
@@ -1007,15 +1427,19 @@ def restore_editor_content():
 
 
 @app.post("/api/state")
-def update_state(payload: dict = Body(...)):
+def update_state(request: Request, payload: dict = Body(...)):
     state = {
         "items": payload.get("items") if isinstance(payload.get("items"), list) else [],
         "photos": payload.get("photos")
         if isinstance(payload.get("photos"), dict)
         else {},
     }
+    context = get_current_context(request)
+    if context and context.get("household_id"):
+        save_household_state(context["household_id"], state)
+        return {"ok": True, "cloud": True}
     save_state(state)
-    return {"ok": True}
+    return {"ok": True, "cloud": False}
 
 
 @app.post("/api/product-image")

@@ -24,6 +24,20 @@ Use GitHub as the source of truth for code. Use Railway for hosting, variables, 
 
 Do not depend on local `127.0.0.1` or a laptop IP for normal usage.
 
+## V3 Cloud Core
+
+This version includes the first cloud-app foundation:
+
+- email/password registration
+- login/logout with HTTP-only session cookies
+- personal household created on registration
+- invite code for shared household access
+- per-household cloud state for items and photos metadata
+- optional PostgreSQL through `DATABASE_URL`
+- SQLite-on-volume fallback when `DATABASE_URL` is not set
+
+For production, add Railway Postgres and keep `DATABASE_URL` in Railway Variables.
+
 ## Project Files
 
 - `app.py` - FastAPI backend.

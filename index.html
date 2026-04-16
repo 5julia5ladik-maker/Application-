@@ -710,6 +710,26 @@ input[type=file]{display:none}
   <div class="detail-header safe-top">
     <div class="confirm-title">Настройки</div>
   </div>
+  <div class="settings-card" id="cloud-auth-card">
+    <div class="analytics-label">Cloud account</div>
+    <div class="network-main" id="auth-status">Проверяю вход...</div>
+    <div class="auth-grid" id="auth-form">
+      <input class="search-input" id="auth-email" type="email" placeholder="Email">
+      <input class="search-input" id="auth-password" type="password" placeholder="Пароль">
+      <button class="small-btn primary" id="auth-login-btn" type="button">Войти</button>
+      <button class="small-btn secondary" id="auth-register-btn" type="button">Создать аккаунт</button>
+    </div>
+    <div class="mini-list" id="auth-cloud-tools" style="display:none">
+      <div class="mini-item"><span>Дом</span><strong id="auth-household-name">—</strong></div>
+      <div class="mini-item"><span>Invite code</span><strong id="auth-invite-code">—</strong></div>
+      <div class="auth-grid">
+        <input class="search-input" id="auth-join-code" type="text" placeholder="Код дома">
+        <button class="small-btn secondary" id="auth-join-btn" type="button">Войти в дом</button>
+        <button class="small-btn primary" id="auth-copy-invite-btn" type="button">Скопировать код</button>
+        <button class="small-btn secondary" id="auth-logout-btn" type="button">Выйти</button>
+      </div>
+    </div>
+  </div>
   <div class="settings-card">
     <div class="analytics-label">Шаблоны</div>
     <div class="template-actions">
@@ -745,6 +765,10 @@ input[type=file]{display:none}
 <style>
 .toast{white-space:normal;max-width:min(86vw,420px);text-align:center;line-height:1.25}
 .camera-fallback-note{margin:10px 20px 0;padding:12px 14px;border-radius:18px;background:rgba(255,210,150,.12);border:1px solid rgba(255,210,150,.24);color:rgba(255,255,255,.78);font-size:12px;font-weight:700;line-height:1.35}
+.auth-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.auth-grid .search-input{grid-column:span 2}
+.auth-grid .small-btn{width:100%;min-height:46px}
+#cloud-auth-card{border:1px solid rgba(119,178,140,.24);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(235,248,239,.88))}
 </style>
 
 <script>
@@ -753,6 +777,12 @@ const GEMINI_BACKEND_URL = '/recognize'
 const PRODUCT_IMAGE_API_URL = '/api/product-image'
 const STATE_API_URL = '/api/state'
 const INFO_API_URL = '/api/info'
+const AUTH_ME_URL = '/api/auth/me'
+const AUTH_LOGIN_URL = '/api/auth/login'
+const AUTH_REGISTER_URL = '/api/auth/register'
+const AUTH_LOGOUT_URL = '/api/auth/logout'
+const HOUSEHOLD_INVITE_URL = '/api/household/invite'
+const HOUSEHOLD_JOIN_URL = '/api/household/join'
 let items = []
 const ITEMS_KEY = 'hs_items_stable'
 const PHOTOS_KEY = 'hs_item_photos_v1'
@@ -3259,6 +3289,116 @@ if(document.getElementById('install-btn')) document.getElementById('install-btn'
     showToast('Открой меню браузера и выбери "На экран домой"')
   }
 }
+let authState = {authenticated:false}
+async function authRequest(url, payload){
+  const r = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    credentials:'same-origin',
+    body: JSON.stringify(payload || {})
+  })
+  const data = await r.json().catch(() => ({}))
+  if(!r.ok || data.ok === false) throw new Error(data.error || 'Cloud auth error')
+  return data
+}
+function setAuthStatus(text){
+  const el = document.getElementById('auth-status')
+  if(el) el.textContent = text
+}
+async function loadAuthStatus(){
+  try{
+    const r = await fetch(AUTH_ME_URL, {cache:'no-store', credentials:'same-origin'})
+    authState = await r.json()
+    renderAuthPanel()
+    return authState
+  }catch(e){
+    authState = {authenticated:false}
+    renderAuthPanel()
+    return authState
+  }
+}
+async function loadInviteCode(){
+  try{
+    const r = await fetch(HOUSEHOLD_INVITE_URL, {cache:'no-store', credentials:'same-origin'})
+    const data = await r.json()
+    const el = document.getElementById('auth-invite-code')
+    if(el) el.textContent = data.invite_code || '—'
+  }catch(e){}
+}
+function renderAuthPanel(){
+  const form = document.getElementById('auth-form')
+  const tools = document.getElementById('auth-cloud-tools')
+  if(!form || !tools) return
+  if(authState && authState.authenticated){
+    form.style.display = 'none'
+    tools.style.display = 'block'
+    const user = authState.user || {}
+    const household = authState.household || {}
+    setAuthStatus('Cloud sync включён: ' + (user.email || 'аккаунт'))
+    const houseEl = document.getElementById('auth-household-name')
+    if(houseEl) houseEl.textContent = household.name || 'Мой дом'
+    loadInviteCode()
+  }else{
+    form.style.display = 'grid'
+    tools.style.display = 'none'
+    setAuthStatus('Войдите, чтобы телефон и ПК видели один общий список.')
+  }
+}
+async function handleAuthLogin(registerMode){
+  const email = document.getElementById('auth-email')?.value || ''
+  const password = document.getElementById('auth-password')?.value || ''
+  try{
+    await authRequest(registerMode ? AUTH_REGISTER_URL : AUTH_LOGIN_URL, {
+      email,
+      password,
+      name: email.split('@')[0],
+      household_name: 'Мой дом'
+    })
+    await loadAuthStatus()
+    await loadServerState()
+    showToast(registerMode ? 'Аккаунт создан. Cloud sync включён' : 'Вход выполнен')
+  }catch(e){
+    showToast(e.message || 'Не удалось войти')
+  }
+}
+async function handleAuthLogout(){
+  try{
+    await authRequest(AUTH_LOGOUT_URL, {})
+    authState = {authenticated:false}
+    renderAuthPanel()
+    showToast('Вы вышли из cloud account')
+  }catch(e){
+    showToast('Не удалось выйти')
+  }
+}
+async function handleJoinHousehold(){
+  const code = document.getElementById('auth-join-code')?.value || ''
+  try{
+    await authRequest(HOUSEHOLD_JOIN_URL, {invite_code:code})
+    await loadAuthStatus()
+    await loadServerState()
+    showToast('Дом подключён')
+  }catch(e){
+    showToast(e.message || 'Код не подошёл')
+  }
+}
+function setupAuthPanel(){
+  const login = document.getElementById('auth-login-btn')
+  const register = document.getElementById('auth-register-btn')
+  const logout = document.getElementById('auth-logout-btn')
+  const join = document.getElementById('auth-join-btn')
+  const copy = document.getElementById('auth-copy-invite-btn')
+  if(login) login.onclick = () => handleAuthLogin(false)
+  if(register) register.onclick = () => handleAuthLogin(true)
+  if(logout) logout.onclick = handleAuthLogout
+  if(join) join.onclick = handleJoinHousehold
+  if(copy) copy.onclick = async () => {
+    const code = document.getElementById('auth-invite-code')?.textContent || ''
+    try{ await navigator.clipboard.writeText(code); showToast('Код скопирован') }
+    catch(e){ showToast('Код: ' + code) }
+  }
+  loadAuthStatus()
+}
 document.getElementById('det-minus3').onclick = () => changeCurrent(-3)
 document.getElementById('det-minus1').onclick = () => changeCurrent(-1)
 document.getElementById('det-plus1').onclick = () => changeCurrent(1)
@@ -3275,6 +3415,7 @@ updateFilterChips()
   renderTemplates()
 scheduleRenderHome()
 loadServerInfo()
+setupAuthPanel()
 setTimeout(() => migrateExistingThumbnails().catch(() => {}), 1200)
 loadServerState()
 window.addEventListener('beforeinstallprompt', e => {
