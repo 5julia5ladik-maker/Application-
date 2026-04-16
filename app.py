@@ -29,6 +29,19 @@ IMAGE_CACHE_FILE = DATA_DIR / "image_cache.json"
 KEY_FILE = BASE_DIR / "gemini_api_key.txt"
 POLLINATIONS_KEY_FILE = BASE_DIR / "pollinations_api_key.txt"
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+GEMINI_RECOGNITION_MODELS = [
+    model.strip()
+    for model in os.getenv(
+        "GEMINI_RECOGNITION_MODELS",
+        f"{GEMINI_MODEL},gemini-2.0-flash,gemini-1.5-flash",
+    ).split(",")
+    if model.strip()
+]
+GEMINI_API_VERSIONS = [
+    version.strip()
+    for version in os.getenv("GEMINI_API_VERSIONS", "v1beta,v1").split(",")
+    if version.strip()
+]
 GEMINI_IMAGE_MODEL = os.getenv("GEMINI_IMAGE_MODEL", "gemini-2.5-flash-image")
 GEMINI_IMAGE_MODELS = [
     model.strip()
@@ -542,6 +555,100 @@ def build_payload(img_b64: str, mime: str) -> dict:
     }
 
 
+PROMPT = """
+Ты анализируешь фото бытового товара, еды, косметики, одежды, техники или другого продукта для домашнего учета.
+Верни только JSON-объект без markdown и текста вокруг.
+
+Нужные поля:
+- product: короткое название товара на русском
+- brand: бренд, если виден; иначе "Без бренда"
+- place: где обычно хранится дома, например "Ванная", "Кухня", "Дом", "Гардероб", "Уборка"
+- extra: короткое понятное описание
+- total: примерное количество единиц в упаковке, если видно; иначе 1
+- usage_rate_guess: примерный расход в единицах в день для обычного дома из 2 человек
+
+Правила:
+- Если это одежда, верни тип одежды и бренд/надпись, если они видны.
+- Если это одноразка, vape или e-cig, так и напиши.
+- Если бренд виден, верни его максимально точно.
+- Если не уверен, все равно дай лучший разумный вариант.
+- total должно быть числом.
+- usage_rate_guess должно быть числом от 0.01 до 3.
+""".strip()
+
+
+def gemini_generate_content(payload: dict) -> tuple[dict, str, str]:
+    errors = []
+    seen = set()
+    models = [model for model in GEMINI_RECOGNITION_MODELS if model]
+    loose_payload = {
+        "contents": payload.get("contents", []),
+        "generationConfig": {"temperature": 0.2},
+    }
+    payload_attempts = [("schema", payload), ("loose", loose_payload)]
+
+    for model in models:
+        if model in seen:
+            continue
+        seen.add(model)
+
+        for version in GEMINI_API_VERSIONS:
+            for attempt_name, attempt_payload in payload_attempts:
+                url = (
+                    f"https://generativelanguage.googleapis.com/{version}/models/"
+                    f"{model}:generateContent"
+                )
+                try:
+                    response = HTTP.post(
+                        url,
+                        headers={
+                            "x-goog-api-key": GEMINI_API_KEY,
+                            "Content-Type": "application/json",
+                        },
+                        json=attempt_payload,
+                        timeout=60,
+                    )
+                except requests.RequestException as exc:
+                    errors.append(f"{version}/{model}/{attempt_name}: {exc}")
+                    continue
+
+                try:
+                    data = response.json()
+                except ValueError:
+                    data = {"error": {"message": response.text[:500]}}
+
+                if response.status_code < 400:
+                    return data, model, version
+
+                message = stringify_error(data)
+                errors.append(
+                    f"{version}/{model}/{attempt_name}: HTTP {response.status_code}: {message}"
+                )
+                if response.status_code not in (400, 404):
+                    raise RuntimeError(
+                        f"Gemini recognition failed: HTTP {response.status_code}: {message}"
+                    )
+
+    raise RuntimeError("Gemini recognition failed. " + " | ".join(errors))
+
+
+def parse_json_text(text: str) -> dict:
+    cleaned = (text or "").strip()
+    if cleaned.startswith("```"):
+        cleaned = cleaned.strip("`").strip()
+        if cleaned.lower().startswith("json"):
+            cleaned = cleaned[4:].strip()
+
+    try:
+        return json.loads(cleaned)
+    except json.JSONDecodeError:
+        start = cleaned.find("{")
+        end = cleaned.rfind("}")
+        if start >= 0 and end > start:
+            return json.loads(cleaned[start : end + 1])
+        raise
+
+
 def load_state() -> dict:
     if not STATE_FILE.exists():
         return {"items": [], "photos": {}}
@@ -733,6 +840,8 @@ def health():
         "state_found": STATE_FILE.exists(),
         "key_set": bool(GEMINI_API_KEY),
         "model": GEMINI_MODEL,
+        "recognition_models": GEMINI_RECOGNITION_MODELS,
+        "recognition_api_versions": GEMINI_API_VERSIONS,
         "image_model": GEMINI_IMAGE_MODELS[0] if GEMINI_IMAGE_MODELS else GEMINI_IMAGE_MODEL,
         "image_models": GEMINI_IMAGE_MODELS,
         "image_provider": IMAGE_PROVIDER,
@@ -766,6 +875,8 @@ def get_info():
         "key_source": key_source_label(),
         "key_masked": masked_api_key(),
         "model": GEMINI_MODEL,
+        "recognition_models": GEMINI_RECOGNITION_MODELS,
+        "recognition_api_versions": GEMINI_API_VERSIONS,
         "image_model": GEMINI_IMAGE_MODELS[0] if GEMINI_IMAGE_MODELS else GEMINI_IMAGE_MODEL,
         "image_models": GEMINI_IMAGE_MODELS,
         "image_provider": IMAGE_PROVIDER,
@@ -975,32 +1086,22 @@ async def recognize(file: UploadFile = File(...)):
     mime = detect_mime(raw)
     img_b64 = base64.b64encode(raw).decode("utf-8")
     payload = build_payload(img_b64, mime)
-    url = (
-        f"https://generativelanguage.googleapis.com/v1beta/models/"
-        f"{GEMINI_MODEL}:generateContent?key={GEMINI_API_KEY}"
-    )
 
     try:
-        response = HTTP.post(url, json=payload, timeout=60)
-        data = response.json()
-    except requests.RequestException as exc:
+        data, used_model, used_version = gemini_generate_content(payload)
+    except RuntimeError as exc:
         return JSONResponse(
-            status_code=502, content={"error": f"Gemini request failed: {exc}"}
-        )
-    except ValueError:
-        return JSONResponse(
-            status_code=502, content={"error": "Gemini returned invalid JSON"}
-        )
-
-    if response.status_code >= 400:
-        return JSONResponse(
-            status_code=response.status_code,
-            content={"error": stringify_error(data), "raw": data},
+            status_code=502,
+            content={
+                "error": str(exc),
+                "models": GEMINI_RECOGNITION_MODELS,
+                "versions": GEMINI_API_VERSIONS,
+            },
         )
 
     try:
         text = data["candidates"][0]["content"]["parts"][0]["text"]
-        parsed = json.loads(text)
+        parsed = parse_json_text(text)
     except (KeyError, IndexError, TypeError, json.JSONDecodeError):
         return JSONResponse(
             status_code=500,
@@ -1024,4 +1125,6 @@ async def recognize(file: UploadFile = File(...)):
     except (TypeError, ValueError):
         parsed["usage_rate_guess"] = 0.4
 
+    parsed["recognition_model"] = used_model
+    parsed["recognition_api_version"] = used_version
     return parsed
