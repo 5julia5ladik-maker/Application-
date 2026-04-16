@@ -503,7 +503,7 @@ input[type=file]{display:none}
       </div>
     </div>
   </div>
-  <div style="padding:0 20px 10px;color:rgba(255,255,255,.6);font-size:12px">Для AI нужен запущенный backend на ноутбуке.</div><div class="camera-controls">
+  <div style="padding:0 20px 10px;color:rgba(255,255,255,.6);font-size:12px">AI работает через Railway. Ноутбук не нужен — открывайте приложение по публичной ссылке.</div><div class="camera-controls">
     <div class="ctrl-row">
       <label class="ctrl-btn">📷 Камера<input type="file" id="inp-camera" accept="image/*" capture="environment"></label>
       <label class="ctrl-btn">🖼 Галерея<input type="file" id="inp-gallery" accept="image/*"></label>
@@ -859,13 +859,14 @@ async function loadServerInfo(){
     if(!r.ok) throw new Error('info load failed')
     const data = await r.json()
     const urls = Array.isArray(data.urls) ? data.urls : []
-    const phoneUrl = urls.find(url => !url.includes('127.0.0.1')) || urls[0] || window.location.origin
+    const isHosted = !location.hostname.includes('127.0.0.1') && location.hostname !== 'localhost'
+    const phoneUrl = isHosted ? window.location.origin : (urls.find(url => !url.includes('127.0.0.1')) || urls[0] || window.location.origin)
     statusEl.textContent = data.key_set
-      ? 'Gemini подключен. Эту ссылку можно открыть на телефоне в той же Wi‑Fi сети.'
-      : 'Сайт работает. Для AI-распознавания осталось задать GEMINI_API_KEY и перезапустить сервер.'
-    urlEl.innerHTML = '<strong>Телефон:</strong> ' + phoneUrl
+      ? (isHosted ? 'Gemini подключен. Приложение работает на Railway, ноутбук не нужен.' : 'Gemini подключен. Для локального режима открой эту ссылку на телефоне.')
+      : 'Сайт работает. Для AI-распознавания нужно задать GEMINI_API_KEY в Railway Variables.'
+    urlEl.innerHTML = '<strong>Адрес приложения:</strong> ' + phoneUrl
   }catch(e){
-    statusEl.textContent = 'Сервер работает, но адрес для телефона не удалось определить автоматически.'
+    statusEl.textContent = 'Приложение работает. Основной адрес — текущая ссылка в браузере.'
     urlEl.textContent = window.location.origin
   }
 }

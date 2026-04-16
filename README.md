@@ -10,6 +10,20 @@ Railway production URL:
 https://web-production-5fee.up.railway.app
 ```
 
+This is the main app URL. The laptop is not required as a server.
+
+## Cloud Workflow
+
+The target workflow is:
+
+```text
+GitHub -> Railway -> phone/PC browser
+```
+
+Use GitHub as the source of truth for code. Use Railway for hosting, variables, volume, logs, and deploys.
+
+Do not depend on local `127.0.0.1` or a laptop IP for normal usage.
+
 ## Project Files
 
 - `app.py` - FastAPI backend.
@@ -21,7 +35,9 @@ https://web-production-5fee.up.railway.app
 - `.env.example` - example environment variables.
 - `.gitignore` - keeps secrets and local data out of GitHub.
 
-## Local Run
+## Local Run Optional
+
+Local run is only for development or emergency debugging. Normal usage should happen through the Railway URL above.
 
 Install dependencies:
 
