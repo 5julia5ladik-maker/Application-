@@ -111,7 +111,7 @@ HTTP.mount(
             connect=2,
             read=1,
             backoff_factor=0.45,
-            status_forcelist=(429, 500, 502, 503, 504),
+            status_forcelist=(500, 502, 503, 504),
             allowed_methods=frozenset(["GET", "POST"]),
         )
     ),
@@ -624,7 +624,7 @@ def gemini_generate_content(payload: dict) -> tuple[dict, str, str]:
                 errors.append(
                     f"{version}/{model}/{attempt_name}: HTTP {response.status_code}: {message}"
                 )
-                if response.status_code not in (400, 404):
+                if response.status_code not in (400, 404, 429, 503, 504):
                     raise RuntimeError(
                         f"Gemini recognition failed: HTTP {response.status_code}: {message}"
                     )
@@ -647,6 +647,18 @@ def parse_json_text(text: str) -> dict:
         if start >= 0 and end > start:
             return json.loads(cleaned[start : end + 1])
         raise
+
+
+def fallback_recognition(reason: str = "") -> dict:
+    return {
+        "product": "Товар с фото",
+        "brand": "Без бренда",
+        "place": "Дом",
+        "extra": "AI временно не распознал товар. Проверьте и исправьте вручную.",
+        "total": 1,
+        "usage_rate_guess": 0.4,
+        "ai_warning": reason[:700] if reason else "AI recognition fallback",
+    }
 
 
 def load_state() -> dict:
@@ -1074,10 +1086,7 @@ async def generate_product_image(
 @app.post("/recognize")
 async def recognize(file: UploadFile = File(...)):
     if not GEMINI_API_KEY:
-        return JSONResponse(
-            status_code=400,
-            content={"error": "Gemini API key is missing. Put it into gemini_api_key.txt and restart the server."},
-        )
+        return fallback_recognition("Gemini API key is missing")
 
     raw = await file.read()
     if not raw:
@@ -1090,23 +1099,13 @@ async def recognize(file: UploadFile = File(...)):
     try:
         data, used_model, used_version = gemini_generate_content(payload)
     except RuntimeError as exc:
-        return JSONResponse(
-            status_code=502,
-            content={
-                "error": str(exc),
-                "models": GEMINI_RECOGNITION_MODELS,
-                "versions": GEMINI_API_VERSIONS,
-            },
-        )
+        return fallback_recognition(str(exc))
 
     try:
         text = data["candidates"][0]["content"]["parts"][0]["text"]
         parsed = parse_json_text(text)
     except (KeyError, IndexError, TypeError, json.JSONDecodeError):
-        return JSONResponse(
-            status_code=500,
-            content={"error": "Could not parse Gemini response", "raw": data},
-        )
+        return fallback_recognition("Could not parse Gemini response")
 
     parsed["product"] = str(parsed.get("product") or "Не распознано").strip()
     parsed["brand"] = str(parsed.get("brand") or "Без бренда").strip()

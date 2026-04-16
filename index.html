@@ -742,6 +742,11 @@ input[type=file]{display:none}
 </div>
 </div>
 
+<style>
+.toast{white-space:normal;max-width:min(86vw,420px);text-align:center;line-height:1.25}
+.camera-fallback-note{margin:10px 20px 0;padding:12px 14px;border-radius:18px;background:rgba(255,210,150,.12);border:1px solid rgba(255,210,150,.24);color:rgba(255,255,255,.78);font-size:12px;font-weight:700;line-height:1.35}
+</style>
+
 <script>
 
 const GEMINI_BACKEND_URL = '/recognize'
@@ -2978,6 +2983,75 @@ openDetail = function(id){
   openDetailBaseForRegen(id)
   ensureRegenerateButton()
 }
+function humanAiError(message){
+  const text = String(message || '').toLowerCase()
+  if(text.includes('429') || text.includes('too many') || text.includes('quota') || text.includes('rate')){
+    return 'Gemini сейчас ограничил запросы. Я открыл карточку вручную: проверь название и сохрани.'
+  }
+  if(text.includes('timeout') || text.includes('timed out')){
+    return 'AI отвечает слишком долго. Я открыл карточку вручную: проверь название и сохрани.'
+  }
+  if(text.includes('api key') || text.includes('key')){
+    return 'Проблема с Gemini API key. Фото сохранено, данные можно поправить вручную.'
+  }
+  return 'AI не распознал товар. Фото сохранено, проверь карточку вручную.'
+}
+async function recognizeProduct(){
+  if(!photoLoaded || !photoData){
+    showToast('Сначала добавь фото')
+    return
+  }
+
+  document.getElementById('cap-scan-line').style.display = 'block'
+  document.getElementById('analyzing-badge').style.display = 'flex'
+  document.getElementById('cam-reset-btn').style.display = 'none'
+  document.getElementById('cam-recognize-btn').style.display = 'none'
+  document.getElementById('result-overlay').style.display = 'none'
+
+  try{
+    const imageResponse = await fetch(photoData)
+    const blob = await imageResponse.blob()
+    const fd = new FormData()
+    fd.append('file', blob, 'capture.jpg')
+
+    const r = await fetch(GEMINI_BACKEND_URL, {method:'POST', body:fd})
+    const data = await r.json().catch(() => ({}))
+    if(!r.ok){
+      throw new Error(typeof data.error === 'string' ? data.error : 'backend error')
+    }
+
+    const result = {
+      place: String(data.place || 'Дом').trim(),
+      product: String(data.product || 'Товар с фото').trim(),
+      brand: String(data.brand || 'Без бренда').trim(),
+      extra: String(data.extra || 'Проверьте и исправьте вручную.').trim(),
+      total: Math.max(1, Math.round(Number(data.total || 1))),
+      usageRateGuess: Math.max(0.01, Number(data.usage_rate_guess || data.usageRateGuess || 0.4)),
+      aiWarning: data.ai_warning || ''
+    }
+
+    document.getElementById('cap-scan-line').style.display = 'none'
+    document.getElementById('analyzing-badge').style.display = 'none'
+    document.getElementById('res-icon').innerHTML = '<img src="' + photoData + '" alt="">'
+    document.getElementById('res-name').textContent = result.brand
+    document.getElementById('res-sub').textContent = result.product + ' · ' + result.total + ' шт'
+    document.getElementById('result-overlay').style.display = 'block'
+    if(result.aiWarning) showToast(humanAiError(result.aiWarning))
+
+    setTimeout(() => {
+      pendingDraft = result
+      pendingPhoto = photoData
+      openConfirm()
+    }, result.aiWarning ? 850 : 500)
+  }catch(e){
+    document.getElementById('cap-scan-line').style.display = 'none'
+    document.getElementById('analyzing-badge').style.display = 'none'
+    document.getElementById('cam-reset-btn').style.display = 'block'
+    document.getElementById('cam-recognize-btn').style.display = 'block'
+    showToast(humanAiError(e && e.message ? e.message : 'AI backend failed'))
+  }
+}
+document.getElementById('cam-recognize-btn').onclick = recognizeProduct
 async function migrateExistingThumbnails(){
   let changed = false
   for(const item of items || []){
