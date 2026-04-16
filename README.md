@@ -1,57 +1,64 @@
 # HomeStock Universal
 
-Локальное веб-приложение для домашних запасов: AI-камера, карточки товаров, список покупок, аналитика, категории, импорт/экспорт и PWA-режим.
+Home inventory web app with AI camera, product cards, shopping plan, analytics, categories, import/export, and PWA support.
 
-## Что уже подготовлено
+## Project Files
 
-- `FastAPI` backend: `app.py`
-- Один frontend-файл: `index.html`
-- Railway deploy config: `railway.json`
-- Procfile для совместимости: `Procfile`
-- Python runtime: `runtime.txt`
-- Список зависимостей: `requirements.txt`
-- Пример переменных окружения: `.env.example`
-- Защита секретов и локальных данных: `.gitignore`
+- `app.py` - FastAPI backend.
+- `index.html` - single-file frontend app.
+- `requirements.txt` - Python dependencies.
+- `railway.json` - Railway deploy config.
+- `Procfile` - deploy compatibility.
+- `runtime.txt` - Python runtime version.
+- `.env.example` - example environment variables.
+- `.gitignore` - keeps secrets and local data out of GitHub.
 
-## Локальный запуск на ПК
+## Local Run
 
-1. Установи зависимости:
+Install dependencies:
 
 ```powershell
 py -m pip install -r requirements.txt
 ```
 
-2. Положи ключ Gemini локально одним из способов:
+Set Gemini API key:
 
 ```powershell
 $env:GEMINI_API_KEY="your_gemini_api_key"
 ```
 
-или создай файл `gemini_api_key.txt` рядом с `app.py`.
+Or create a local `gemini_api_key.txt` file next to `app.py`.
 
-3. Запусти сервер:
+Start server:
 
 ```powershell
 .\start_server.bat
 ```
 
-4. Открой приложение:
+Open on PC:
 
 ```text
 http://127.0.0.1:8000
 ```
 
-Для телефона в одной Wi-Fi сети открывай адрес ПК, например:
+Open on phone in the same Wi-Fi network:
+
+```text
+http://YOUR_PC_LOCAL_IP:8000
+```
+
+Example:
 
 ```text
 http://192.168.0.147:8000
 ```
 
-## Деплой на Railway
+## Railway Deploy
 
-1. Создай GitHub-репозиторий и загрузи туда содержимое папки `homestock-universal`.
-2. В Railway выбери `New Project` -> `Deploy from GitHub repo`.
-3. В Railway добавь переменные окружения:
+1. Push this repository to GitHub.
+2. In Railway, create `New Project`.
+3. Choose `Deploy from GitHub repo`.
+4. Add environment variables in Railway:
 
 ```text
 GEMINI_API_KEY=your_gemini_api_key
@@ -65,45 +72,47 @@ IMAGE_HEIGHT=520
 POLLINATIONS_TIMEOUT=75
 ```
 
-Если будет платный/рабочий ключ Pollinations, можно добавить:
+Optional:
 
 ```text
 POLLINATIONS_API_KEY=your_pollinations_key
 ```
 
-Railway сам использует команду из `railway.json`:
+Railway uses this start command from `railway.json`:
 
 ```text
 uvicorn app:app --host 0.0.0.0 --port $PORT
 ```
 
-Проверка сервера:
+Health check:
 
 ```text
 /health
 ```
 
-## Важно про секреты
+## Secrets
 
-Не загружай в GitHub:
+Do not commit these files:
 
 - `gemini_api_key.txt`
 - `pollinations_api_key.txt`
 - `.env`
-- папку `data/`
+- `data/`
 
-Эти файлы уже добавлены в `.gitignore`. Если ключ Gemini уже где-то показывался публично, лучше перевыпустить его в Google AI Studio.
+They are already ignored by `.gitignore`.
 
-## Важно про данные
+If an API key was shared publicly, rotate it before production deploy.
 
-Сейчас данные хранятся локально в папке `data/`. Для полноценной версии с регистрацией, общим доступом и стабильным Railway-деплоем лучше следующим этапом подключить базу данных, например Railway Postgres.
+## Data Storage
 
-## Следующий этап
+The current version stores local data in `data/`. For production with registration, shared access, and stable Railway deploys, the next step is moving data to PostgreSQL, for example Railway Postgres.
 
-Для версии с аккаунтами нужно добавить:
+## Next Version
 
-- регистрацию и вход
-- пользователей и домашние группы
-- PostgreSQL вместо локальных JSON-файлов
-- синхронизацию телефона и ПК через один сервер
-- роли доступа: владелец, член семьи, только просмотр
+Recommended next steps:
+
+- user registration and login
+- household groups
+- PostgreSQL database
+- sync between phone and PC through one hosted server
+- access roles: owner, family member, read-only
