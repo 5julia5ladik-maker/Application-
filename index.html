@@ -3933,13 +3933,11 @@ function renderAuthPanel(){
   }
 }
 async function bootstrapEntryGate(){
-  if(clientHardResetNeeded){
-    try{ await authRequest(AUTH_LOGOUT_URL, {}) }catch(e){}
-    authState = {authenticated:false}
-  }
   const oauthParams = new URLSearchParams(location.search)
+  const googleOauthSuccess = oauthParams.get('oauth') === 'google' && oauthParams.get('status') === 'success'
   if(oauthParams.get('oauth') === 'google'){
-    if(oauthParams.get('status') === 'success'){
+    if(googleOauthSuccess){
+      clientHardResetNeeded = false
       localStorage.setItem(CLIENT_RESET_KEY, '1')
       markEntryFlowDone('account')
       history.replaceState({}, document.title, location.pathname)
@@ -3948,6 +3946,10 @@ async function bootstrapEntryGate(){
       history.replaceState({}, document.title, location.pathname)
       showToast('Google login error: ' + (oauthParams.get('message') || 'failed'))
     }
+  }
+  if(clientHardResetNeeded && !googleOauthSuccess){
+    try{ await authRequest(AUTH_LOGOUT_URL, {}) }catch(e){}
+    authState = {authenticated:false}
   }
   await loadAuthStatus()
   const user = authState && authState.user ? authState.user : null
