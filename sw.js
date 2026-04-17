@@ -1,4 +1,4 @@
-const CACHE_NAME = "homestock-shell-v1";
+const CACHE_NAME = "homestock-shell-v2-auth-onboarding";
 const URLS = ["/", "/editor", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

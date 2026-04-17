@@ -833,6 +833,8 @@ const PHOTOS_KEY = 'hs_item_photos_v1'
 const ENTRY_PREFS_KEY = 'hs_entry_preferences_v1'
 const ENTRY_MODE_KEY = 'hs_entry_mode_v1'
 const ENTRY_DONE_KEY = 'hs_entry_done_v1'
+const ENTRY_VERSION_KEY = 'hs_entry_flow_version'
+const ENTRY_FLOW_VERSION = '2026-04-17-auth-onboarding-v2'
 
 function loadJSON(key, fallback){
   try{
@@ -3485,6 +3487,7 @@ const ENTRY_COPY = {
     or:'или', socialSoon:'OAuth подключим следующим шагом. Сейчас работает email и гость.',
     guestMode:'Гостевой режим: данные сохраняются только на этом устройстве.',
     accountMode:'Cloud sync включен',
+    openApp:'Открыть приложение',
     openAuth:'Войти / создать аккаунт',
     prefsSaved:'Настройки сохранены',
     transferred:'Аккаунт создан, гостевые данные перенесены в cloud'
@@ -3504,6 +3507,7 @@ const ENTRY_COPY = {
     or:'or', socialSoon:'OAuth comes next. Email and guest mode work now.',
     guestMode:'Guest mode: data stays on this device.',
     accountMode:'Cloud sync is on',
+    openApp:'Open app',
     openAuth:'Sign in / create account',
     prefsSaved:'Preferences saved',
     transferred:'Account created and guest data moved to cloud'
@@ -3523,6 +3527,7 @@ const ENTRY_COPY = {
     or:'lub', socialSoon:'OAuth dodamy kolejnym krokiem. Teraz działa email i tryb gościa.',
     guestMode:'Tryb gościa: dane zostają na tym urządzeniu.',
     accountMode:'Cloud sync włączony',
+    openApp:'Otwórz aplikację',
     openAuth:'Zaloguj / utwórz konto',
     prefsSaved:'Ustawienia zapisane',
     transferred:'Konto utworzone, dane gościa przeniesione do chmury'
@@ -3542,6 +3547,7 @@ const ENTRY_COPY = {
     or:'або', socialSoon:'OAuth додамо наступним кроком. Зараз працюють email і гість.',
     guestMode:'Гість: дані зберігаються тільки на цьому пристрої.',
     accountMode:'Cloud sync увімкнено',
+    openApp:'Відкрити застосунок',
     openAuth:'Увійти / створити акаунт',
     prefsSaved:'Налаштування збережено',
     transferred:'Акаунт створено, гостьові дані перенесено у cloud'
@@ -3574,8 +3580,16 @@ function currencyOptions(){
 function entryDone(){
   return localStorage.getItem(ENTRY_DONE_KEY) === '1'
 }
+function entryFlowSeen(){
+  return localStorage.getItem(ENTRY_VERSION_KEY) === ENTRY_FLOW_VERSION
+}
 function entryMode(){
   return localStorage.getItem(ENTRY_MODE_KEY) || ''
+}
+function markEntryFlowDone(mode){
+  localStorage.setItem(ENTRY_DONE_KEY, '1')
+  localStorage.setItem(ENTRY_MODE_KEY, mode)
+  localStorage.setItem(ENTRY_VERSION_KEY, ENTRY_FLOW_VERSION)
 }
 function showEntryGate(step){
   entryStep = step || entryStep || 'welcome'
@@ -3610,18 +3624,25 @@ function renderEntryGate(){
   }
   if(entryStep === 'onboarding'){
     const slide = c.slides[entrySlide] || c.slides[0]
+    const finalButtonText = authState && authState.authenticated ? (c.openApp || c.done) : c.done
     gate.innerHTML = `<div class="entry-shell"><section class="entry-card">
       <div class="entry-progress">${c.slides.map((_,i) => `<span class="entry-dot ${i === entrySlide ? 'active' : ''}"></span>`).join('')}</div>
       <div class="entry-art">${entryEscape(slide[2])}</div>
       <h2 class="entry-title">${entryEscape(slide[0])}</h2>
       <p class="entry-sub">${entryEscape(slide[1])}</p>
       <div class="entry-actions">
-        <button class="entry-btn" id="entry-next">${entryEscape(entrySlide >= c.slides.length - 1 ? c.done : c.next)}</button>
+        <button class="entry-btn" id="entry-next">${entryEscape(entrySlide >= c.slides.length - 1 ? finalButtonText : c.next)}</button>
         ${entrySlide ? '<button class="entry-btn secondary" id="entry-back">Назад</button>' : ''}
       </div>
     </section></div>`
-    document.getElementById('entry-next').onclick = () => {
+    document.getElementById('entry-next').onclick = async () => {
       if(entrySlide < c.slides.length - 1){ entrySlide++; renderEntryGate(); return }
+      if(authState && authState.authenticated){
+        markEntryFlowDone('account')
+        hideEntryGate()
+        await loadServerState()
+        return
+      }
       entryStep = 'auth'; renderEntryGate()
     }
     const back = document.getElementById('entry-back')
@@ -3680,8 +3701,7 @@ async function handleEntryEmail(registerMode){
       language: entryPrefs.language,
       currency: entryPrefs.currency
     })
-    localStorage.setItem(ENTRY_DONE_KEY, '1')
-    localStorage.setItem(ENTRY_MODE_KEY, 'account')
+    markEntryFlowDone('account')
     await loadAuthStatus()
     if(registerMode){
       await transferGuestStateToCloud()
@@ -3696,8 +3716,7 @@ async function handleEntryEmail(registerMode){
   }
 }
 async function startGuestMode(){
-  localStorage.setItem(ENTRY_DONE_KEY, '1')
-  localStorage.setItem(ENTRY_MODE_KEY, 'guest')
+  markEntryFlowDone('guest')
   authState = {authenticated:false}
   loadLocalStateIntoApp()
   renderAuthPanel()
@@ -3774,13 +3793,16 @@ async function bootstrapEntryGate(){
   if(user && (user.language || user.currency)) saveEntryPrefs({language:user.language || entryPrefs.language, currency:user.currency || entryPrefs.currency})
   renderAuthPanel()
   if(authState && authState.authenticated){
-    localStorage.setItem(ENTRY_DONE_KEY, '1')
-    localStorage.setItem(ENTRY_MODE_KEY, 'account')
+    if(!entryFlowSeen()){
+      showEntryGate('welcome')
+      return
+    }
+    markEntryFlowDone('account')
     hideEntryGate()
     await loadServerState()
     return
   }
-  if(entryDone() && entryMode() === 'guest'){
+  if(entryDone() && entryMode() === 'guest' && entryFlowSeen()){
     loadLocalStateIntoApp()
     hideEntryGate()
     return
