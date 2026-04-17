@@ -1226,7 +1226,14 @@ def health():
 def auth_register(payload: dict = Body(...)):
     email = normalize_email(str(payload.get("email") or ""))
     password = str(payload.get("password") or "")
-    name = str(payload.get("name") or email.split("@")[0] or "User").strip()[:80]
+    first_name = str(payload.get("first_name") or "").strip()[:40]
+    last_name = str(payload.get("last_name") or "").strip()[:40]
+    name = str(
+        payload.get("name")
+        or " ".join(part for part in (first_name, last_name) if part)
+        or email.split("@")[0]
+        or "User"
+    ).strip()[:80]
     language = str(payload.get("language") or "ru").strip().lower()[:12] or "ru"
     currency = str(payload.get("currency") or "USD").strip().upper()[:8] or "USD"
     household_name = str(payload.get("household_name") or "Мой дом").strip()[:80]
@@ -1284,6 +1291,42 @@ def auth_logout(request: Request):
     response = JSONResponse({"ok": True})
     clear_session_cookie(response)
     return response
+
+
+@app.get("/api/auth/oauth/{provider}/start")
+def auth_oauth_start(provider: str):
+    provider = (provider or "").strip().lower()
+    config = {
+        "google": ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"),
+        "apple": ("APPLE_CLIENT_ID", "APPLE_CLIENT_SECRET"),
+        "facebook": ("FACEBOOK_CLIENT_ID", "FACEBOOK_CLIENT_SECRET"),
+    }
+    if provider not in config:
+        return JSONResponse(status_code=404, content={"ok": False, "error": "Unknown OAuth provider"})
+
+    client_id_key, client_secret_key = config[provider]
+    if not os.getenv(client_id_key, "").strip() or not os.getenv(client_secret_key, "").strip():
+        return JSONResponse(
+            status_code=501,
+            content={
+                "ok": False,
+                "error": (
+                    f"{provider.title()} login is not configured yet. "
+                    f"Set {client_id_key}, {client_secret_key}, and callback URLs in Railway."
+                ),
+                "provider": provider,
+                "missing": [client_id_key, client_secret_key],
+            },
+        )
+
+    return JSONResponse(
+        status_code=501,
+        content={
+            "ok": False,
+            "error": f"{provider.title()} OAuth credentials are present, but callback flow is not implemented yet.",
+            "provider": provider,
+        },
+    )
 
 
 @app.get("/api/auth/me")

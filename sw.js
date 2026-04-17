@@ -1,4 +1,4 @@
-const CACHE_NAME = "homestock-shell-v3-hard-reset";
+const CACHE_NAME = "homestock-shell-v4-registration-i18n";
 const URLS = ["/", "/editor", "/manifest.webmanifest"];
 
 self.addEventListener("install", (event) => {

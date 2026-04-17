@@ -26,7 +26,7 @@ body::before{content:'';position:fixed;inset:0;background:
   linear-gradient(120deg, rgba(255,255,255,.16), transparent 32%),
   radial-gradient(circle at 50% 120%, rgba(133,82,33,.1), transparent 35%);
 pointer-events:none}
-.shell{width:100%;max-width:430px;min-height:100dvh;background:rgba(247,240,231,.78);position:relative;overflow:hidden;backdrop-filter:blur(18px);box-shadow:0 0 0 1px rgba(255,255,255,.4), 0 30px 80px rgba(54,31,11,.16)}
+.shell{width:100%;max-width:430px;height:100dvh;min-height:100dvh;background:rgba(247,240,231,.78);position:relative;overflow:hidden;backdrop-filter:blur(18px);box-shadow:0 0 0 1px rgba(255,255,255,.4), 0 30px 80px rgba(54,31,11,.16)}
 .screen{position:absolute;inset:0;overflow-y:auto;display:none;padding-bottom:22px}
 .screen.active{display:block}
 .safe-top{padding-top:max(28px, env(safe-area-inset-top, 28px))}
@@ -263,7 +263,7 @@ input[type=file]{display:none}
 .shopping-check:checked::after{content:'✓';display:block;color:#fff;font-size:13px;line-height:18px;text-align:center}
 .checked-item{opacity:.56}
 .checked-item .item-name,.checked-item .item-sub,.checked-item .item-days{text-decoration:line-through}
-.bottom-nav{position:fixed;left:50%;right:auto;bottom:0;transform:translate3d(-50%,0,0);width:min(100vw,430px);padding:12px 12px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,234,223,.98));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid rgba(71,45,18,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:6px;z-index:120;box-shadow:0 -18px 42px rgba(74,44,19,.12);will-change:transform;backface-visibility:hidden;contain:layout paint}
+.bottom-nav{position:absolute;left:0;right:0;bottom:0;transform:translate3d(0,0,0);width:100%;padding:12px 12px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg, rgba(255,255,255,.94), rgba(244,234,223,.99));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid rgba(71,45,18,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:6px;z-index:120;box-shadow:0 -18px 42px rgba(74,44,19,.12);will-change:transform;backface-visibility:hidden;contain:layout paint}
 .nav-btn{border:none;background:transparent;border-radius:18px;padding:10px 8px;font:700 11px 'DM Sans',sans-serif;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
 .nav-btn.active{background:rgba(255,255,255,.72);color:var(--text);box-shadow:var(--shadow-soft)}
 .nav-ico{font-size:18px;line-height:1}
@@ -828,10 +828,10 @@ const ITEMS_KEY = 'hs_items_stable'
 const PHOTOS_KEY = 'hs_item_photos_v1'
 const ENTRY_PREFS_KEY = 'hs_entry_preferences_v1'
 const ENTRY_MODE_KEY = 'hs_entry_mode_v1'
-const ENTRY_DONE_KEY = 'hs_entry_done_v3'
-const ENTRY_VERSION_KEY = 'hs_entry_flow_version_v3'
-const ENTRY_FLOW_VERSION = '2026-04-17-auth-onboarding-v3-hard-reset'
-const CLIENT_RESET_KEY = 'homestock_client_reset_2026_04_17_v3'
+const ENTRY_DONE_KEY = 'hs_entry_done_v4'
+const ENTRY_VERSION_KEY = 'hs_entry_flow_version_v4'
+const ENTRY_FLOW_VERSION = '2026-04-17-auth-onboarding-v4-registration-i18n'
+const CLIENT_RESET_KEY = 'homestock_client_reset_2026_04_17_v4'
 let clientHardResetNeeded = false
 
 function loadJSON(key, fallback){
@@ -1375,6 +1375,7 @@ function goTo(name){
   if(name === 'categories') renderCategoriesScreen()
   if(name === 'analytics') renderAnalytics()
   if(name === 'settings') renderTemplates()
+  applyAppTranslations()
 }
 function showToast(msg){
   const t = document.getElementById('toast')
@@ -3501,6 +3502,7 @@ const ENTRY_COPY = {
     authTitle:'Войти в HomeStock', authSub:'Создай аккаунт для синхронизации или начни как гость на этом устройстве.',
     google:'Продолжить с Google', apple:'Продолжить с Apple', facebook:'Продолжить с Facebook',
     email:'Email', password:'Пароль', login:'Войти', register:'Создать аккаунт', guest:'Продолжить как гость',
+    firstName:'Имя', lastName:'Фамилия', confirmPassword:'Повторите пароль', haveAccount:'Уже есть аккаунт? Войти', createTitle:'Создать аккаунт',
     or:'или', socialSoon:'OAuth подключим следующим шагом. Сейчас работает email и гость.',
     guestMode:'Гостевой режим: данные сохраняются только на этом устройстве.',
     accountMode:'Cloud sync включен',
@@ -3521,6 +3523,7 @@ const ENTRY_COPY = {
     authTitle:'Sign in to HomeStock', authSub:'Create an account for sync or continue as guest on this device.',
     google:'Continue with Google', apple:'Continue with Apple', facebook:'Continue with Facebook',
     email:'Email', password:'Password', login:'Log in', register:'Create account', guest:'Continue as guest',
+    firstName:'First name', lastName:'Last name', confirmPassword:'Confirm password', haveAccount:'Already have an account? Log in', createTitle:'Create account',
     or:'or', socialSoon:'OAuth comes next. Email and guest mode work now.',
     guestMode:'Guest mode: data stays on this device.',
     accountMode:'Cloud sync is on',
@@ -3541,6 +3544,7 @@ const ENTRY_COPY = {
     authTitle:'Zaloguj się do HomeStock', authSub:'Utwórz konto do synchronizacji albo używaj jako gość.',
     google:'Kontynuuj z Google', apple:'Kontynuuj z Apple', facebook:'Kontynuuj z Facebook',
     email:'Email', password:'Hasło', login:'Zaloguj', register:'Utwórz konto', guest:'Kontynuuj jako gość',
+    firstName:'Imię', lastName:'Nazwisko', confirmPassword:'Powtórz hasło', haveAccount:'Masz konto? Zaloguj', createTitle:'Utwórz konto',
     or:'lub', socialSoon:'OAuth dodamy kolejnym krokiem. Teraz działa email i tryb gościa.',
     guestMode:'Tryb gościa: dane zostają na tym urządzeniu.',
     accountMode:'Cloud sync włączony',
@@ -3561,6 +3565,7 @@ const ENTRY_COPY = {
     authTitle:'Увійти в HomeStock', authSub:'Створи акаунт для синхронізації або продовж як гість.',
     google:'Продовжити з Google', apple:'Продовжити з Apple', facebook:'Продовжити з Facebook',
     email:'Email', password:'Пароль', login:'Увійти', register:'Створити акаунт', guest:'Продовжити як гість',
+    firstName:"Ім'я", lastName:'Прізвище', confirmPassword:'Повторіть пароль', haveAccount:'Вже є акаунт? Увійти', createTitle:'Створити акаунт',
     or:'або', socialSoon:'OAuth додамо наступним кроком. Зараз працюють email і гість.',
     guestMode:'Гість: дані зберігаються тільки на цьому пристрої.',
     accountMode:'Cloud sync увімкнено',
@@ -3572,10 +3577,61 @@ const ENTRY_COPY = {
 }
 let entryStep = 'welcome'
 let entrySlide = 0
+let entryAuthMode = 'login'
 let entryPrefs = loadJSON(ENTRY_PREFS_KEY, {language:'ru', currency:'USD'})
 
 function entryCopy(){
   return ENTRY_COPY[entryPrefs.language] || ENTRY_COPY.ru
+}
+const APP_COPY = {
+  ru:{today:'Сегодня', homeTitle:'Запасы<br><span>дома</span>', stocks:'Запасы', purchases:'Покупки', categories:'Категории', analytics:'Аналитика', settings:'Настройки', search:'Поиск по товарам, брендам, описанию', important:'Сначала важное', nameSort:'По названию', qtySort:'По остатку', dateSort:'По дате добавления', all:'Все', soon:'Скоро', urgent:'Срочно', shoppingTitle:'Список покупок', shoppingSub:'Здесь товары, которые скоро закончатся или уже заканчиваются.', overview:'Обзор', total:'Всего', favorites:'Избранное', buy:'Купить', fastest:'Быстрее всего заканчиваются', templates:'Шаблоны', pwa:'PWA режим', tips:'Подсказки', account:'Аккаунт', cloud:'Cloud account', aiServer:'AI и сервер', data:'Данные', openAuth:'Войти / создать аккаунт'},
+  en:{today:'Today', homeTitle:'Home<br><span>stock</span>', stocks:'Stock', purchases:'Shopping', categories:'Categories', analytics:'Analytics', settings:'Settings', search:'Search products, brands, descriptions', important:'Important first', nameSort:'By name', qtySort:'By stock', dateSort:'By added date', all:'All', soon:'Soon', urgent:'Urgent', shoppingTitle:'Shopping list', shoppingSub:'Products that are running out or need attention.', overview:'Overview', total:'Total', favorites:'Favorites', buy:'Buy', fastest:'Running out fastest', templates:'Templates', pwa:'PWA mode', tips:'Tips', account:'Account', cloud:'Cloud account', aiServer:'AI and server', data:'Data', openAuth:'Sign in / create account'},
+  pl:{today:'Dzisiaj', homeTitle:'Zapasy<br><span>domu</span>', stocks:'Zapasy', purchases:'Zakupy', categories:'Kategorie', analytics:'Analiza', settings:'Ustawienia', search:'Szukaj produktów, marek, opisów', important:'Najważniejsze najpierw', nameSort:'Według nazwy', qtySort:'Według zapasu', dateSort:'Według daty dodania', all:'Wszystko', soon:'Wkrótce', urgent:'Pilne', shoppingTitle:'Lista zakupów', shoppingSub:'Produkty, które wkrótce się skończą.', overview:'Przegląd', total:'Razem', favorites:'Ulubione', buy:'Kupić', fastest:'Kończą się najszybciej', templates:'Szablony', pwa:'Tryb PWA', tips:'Wskazówki', account:'Konto', cloud:'Konto cloud', aiServer:'AI i serwer', data:'Dane', openAuth:'Zaloguj / utwórz konto'},
+  uk:{today:'Сьогодні', homeTitle:'Запаси<br><span>дому</span>', stocks:'Запаси', purchases:'Покупки', categories:'Категорії', analytics:'Аналітика', settings:'Налаштування', search:'Пошук товарів, брендів, описів', important:'Спочатку важливе', nameSort:'За назвою', qtySort:'За залишком', dateSort:'За датою додавання', all:'Усе', soon:'Скоро', urgent:'Терміново', shoppingTitle:'Список покупок', shoppingSub:'Товари, які скоро закінчаться.', overview:'Огляд', total:'Усього', favorites:'Обране', buy:'Купити', fastest:'Найшвидше закінчуються', templates:'Шаблони', pwa:'PWA режим', tips:'Підказки', account:'Акаунт', cloud:'Cloud акаунт', aiServer:'AI і сервер', data:'Дані', openAuth:'Увійти / створити акаунт'}
+}
+function appCopy(){
+  return APP_COPY[entryPrefs.language] || APP_COPY.ru
+}
+function setText(selector, value){
+  const el = document.querySelector(selector)
+  if(el) el.textContent = value
+}
+function setHtml(selector, value){
+  const el = document.querySelector(selector)
+  if(el) el.innerHTML = value
+}
+function applyAppTranslations(){
+  const c = appCopy()
+  document.documentElement.lang = entryPrefs.language || 'ru'
+  setText('.home-greeting', c.today)
+  setHtml('.home-title', c.homeTitle)
+  const nav = {home:c.stocks, shopping:c.purchases, categories:c.categories, analytics:c.analytics, settings:c.settings}
+  Object.keys(nav).forEach(tab => {
+    const label = document.querySelector(`#bottom-nav [data-tab="${tab}"] span:last-child`)
+    if(label) label.textContent = nav[tab]
+  })
+  setText('#s-shopping .confirm-title', c.shoppingTitle)
+  const shoppingSub = document.querySelector('#s-shopping .detail-header + div')
+  if(shoppingSub) shoppingSub.textContent = c.shoppingSub
+  setText('#s-categories .confirm-title', c.categories)
+  setText('#s-analytics .confirm-title', c.analytics)
+  setText('#s-settings .confirm-title', c.settings)
+  const search = document.getElementById('cat-search-input')
+  if(search) search.placeholder = c.search
+  const sort = document.getElementById('cat-sort-select')
+  if(sort){
+    const labels = [c.important, c.nameSort, c.qtySort, c.dateSort]
+    Array.from(sort.options).forEach((opt,i) => { if(labels[i]) opt.textContent = labels[i] })
+  }
+  const filterLabels = {all:c.all, warn:c.soon, urgent:c.urgent}
+  document.querySelectorAll('#cat-filter-bar .filter-chip').forEach(btn => {
+    if(filterLabels[btn.dataset.filter]) btn.textContent = filterLabels[btn.dataset.filter]
+  })
+  const settingsLabels = document.querySelectorAll('#s-settings .analytics-label')
+  if(settingsLabels[0]) settingsLabels[0].textContent = c.cloud
+  if(settingsLabels[1]) settingsLabels[1].textContent = c.templates
+  if(settingsLabels[2]) settingsLabels[2].textContent = c.pwa
+  if(settingsLabels[3]) settingsLabels[3].textContent = c.tips
 }
 function entryEscape(value){
   return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
@@ -3587,6 +3643,7 @@ function saveEntryPrefs(nextPrefs){
   }
   saveJSON(ENTRY_PREFS_KEY, entryPrefs)
   document.documentElement.lang = entryPrefs.language
+  applyAppTranslations()
 }
 function languageOptions(){
   return ENTRY_LANGUAGES.map(x => `<option value="${x.code}" ${entryPrefs.language === x.code ? 'selected' : ''}>${entryEscape(x.label)}</option>`).join('')
@@ -3623,6 +3680,7 @@ function renderEntryGate(){
   const gate = document.getElementById('entry-gate')
   if(!gate) return
   const c = entryCopy()
+  const isRegister = entryAuthMode === 'register'
   if(entryStep === 'welcome'){
     gate.innerHTML = `<div class="entry-shell"><section class="entry-card">
       <div class="entry-logo">HS</div>
@@ -3668,25 +3726,28 @@ function renderEntryGate(){
   }
   gate.innerHTML = `<div class="entry-shell"><section class="entry-card">
     <div class="entry-logo">HS</div>
-    <h2 class="entry-auth-title">${entryEscape(c.authTitle)}</h2>
+    <h2 class="entry-auth-title">${entryEscape(isRegister ? c.createTitle : c.authTitle)}</h2>
     <p class="entry-sub">${entryEscape(c.authSub)}</p>
     <div class="entry-auth-card">
       <button class="entry-social" data-social="google">${entryEscape(c.google)}</button>
       <button class="entry-social" data-social="apple">${entryEscape(c.apple)}</button>
       <button class="entry-social" data-social="facebook">${entryEscape(c.facebook)}</button>
       <div class="entry-divider">${entryEscape(c.or)}</div>
+      ${isRegister ? `<div class="entry-row">
+        <input class="entry-input" id="entry-first-name" type="text" autocomplete="given-name" placeholder="${entryEscape(c.firstName)}">
+        <input class="entry-input" id="entry-last-name" type="text" autocomplete="family-name" placeholder="${entryEscape(c.lastName)}">
+      </div>` : ''}
       <input class="entry-input" id="entry-email" type="email" autocomplete="email" placeholder="${entryEscape(c.email)}">
-      <input class="entry-input" id="entry-password" type="password" autocomplete="current-password" placeholder="${entryEscape(c.password)}">
-      <div class="entry-row">
-        <button class="entry-btn secondary" id="entry-login">${entryEscape(c.login)}</button>
-        <button class="entry-btn" id="entry-register">${entryEscape(c.register)}</button>
-      </div>
+      <input class="entry-input" id="entry-password" type="password" autocomplete="${isRegister ? 'new-password' : 'current-password'}" placeholder="${entryEscape(c.password)}">
+      ${isRegister ? `<input class="entry-input" id="entry-password-confirm" type="password" autocomplete="new-password" placeholder="${entryEscape(c.confirmPassword)}">` : ''}
+      <button class="entry-btn" id="entry-submit">${entryEscape(isRegister ? c.register : c.login)}</button>
+      <button class="entry-btn secondary" id="entry-mode-toggle">${entryEscape(isRegister ? c.haveAccount : c.register)}</button>
       <button class="entry-btn ghost" id="entry-guest">${entryEscape(c.guest)}</button>
     </div>
   </section></div>`
-  gate.querySelectorAll('[data-social]').forEach(btn => btn.onclick = () => showToast(c.socialSoon))
-  document.getElementById('entry-login').onclick = () => handleEntryEmail(false)
-  document.getElementById('entry-register').onclick = () => handleEntryEmail(true)
+  gate.querySelectorAll('[data-social]').forEach(btn => btn.onclick = () => handleSocialLogin(btn.dataset.social))
+  document.getElementById('entry-submit').onclick = () => handleEntryEmail(isRegister)
+  document.getElementById('entry-mode-toggle').onclick = () => { entryAuthMode = isRegister ? 'login' : 'register'; renderEntryGate() }
   document.getElementById('entry-guest').onclick = startGuestMode
 }
 function loadLocalStateIntoApp(){
@@ -3708,12 +3769,21 @@ async function handleEntryEmail(registerMode){
   const c = entryCopy()
   const email = document.getElementById('entry-email')?.value || ''
   const password = document.getElementById('entry-password')?.value || ''
+  const firstName = (document.getElementById('entry-first-name')?.value || '').trim()
+  const lastName = (document.getElementById('entry-last-name')?.value || '').trim()
+  const confirmPassword = document.getElementById('entry-password-confirm')?.value || ''
+  if(registerMode && password !== confirmPassword){
+    showToast(entryPrefs.language === 'en' ? 'Passwords do not match' : 'Пароли не совпадают')
+    return
+  }
   try{
     if(registerMode) loadLocalStateIntoApp()
     await authRequest(registerMode ? AUTH_REGISTER_URL : AUTH_LOGIN_URL, {
       email,
       password,
-      name: email.split('@')[0],
+      first_name: firstName,
+      last_name: lastName,
+      name: [firstName, lastName].filter(Boolean).join(' ') || email.split('@')[0],
       household_name: 'My Home',
       language: entryPrefs.language,
       currency: entryPrefs.currency
@@ -3730,6 +3800,20 @@ async function handleEntryEmail(registerMode){
     hideEntryGate()
   }catch(e){
     showToast(e.message || 'Auth error')
+  }
+}
+async function handleSocialLogin(provider){
+  const providerName = {google:'Google', apple:'Apple', facebook:'Facebook'}[provider] || provider
+  try{
+    const r = await fetch('/api/auth/oauth/' + provider + '/start', {cache:'no-store', credentials:'same-origin'})
+    const data = await r.json().catch(() => ({}))
+    if(r.ok && data.url){
+      location.href = data.url
+      return
+    }
+    showToast(data.error || (providerName + ': OAuth needs setup'))
+  }catch(e){
+    showToast(providerName + ': OAuth needs setup')
   }
 }
 async function startGuestMode(){
@@ -3771,6 +3855,7 @@ function ensureSettingsAccountUi(){
 }
 function renderAuthPanel(){
   ensureSettingsAccountUi()
+  applyAppTranslations()
   const form = document.getElementById('auth-form')
   const tools = document.getElementById('auth-cloud-tools')
   const prefs = document.getElementById('settings-preferences')
@@ -3844,6 +3929,7 @@ updateFilterChips()
   renderCategoryChips()
   renderCategoriesScreen()
   renderTemplates()
+applyAppTranslations()
 scheduleRenderHome()
 loadServerInfo()
 setupAuthPanel()
