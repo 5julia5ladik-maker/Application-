@@ -36,6 +36,7 @@ SERVICE_WORKER_FILE = BASE_DIR / "sw.js"
 DATA_DIR = BASE_DIR / "data"
 STATE_FILE = DATA_DIR / "state.json"
 IMAGE_CACHE_FILE = DATA_DIR / "image_cache.json"
+DATA_RESET_MARKER_FILE = DATA_DIR / "data_reset_marker.txt"
 SQLITE_DB_FILE = DATA_DIR / "homestock.db"
 KEY_FILE = BASE_DIR / "gemini_api_key.txt"
 POLLINATIONS_KEY_FILE = BASE_DIR / "pollinations_api_key.txt"
@@ -87,6 +88,7 @@ IMAGE_WIDTH = int(os.getenv("IMAGE_WIDTH", "720"))
 IMAGE_HEIGHT = int(os.getenv("IMAGE_HEIGHT", "520"))
 POLLINATIONS_TIMEOUT = int(os.getenv("POLLINATIONS_TIMEOUT", "75"))
 IMAGE_CACHE_MAX_ITEMS = int(os.getenv("IMAGE_CACHE_MAX_ITEMS", "80"))
+FORCE_DATA_RESET_VERSION = "2026-04-17-hard-user-cache-reset"
 
 
 def load_api_key() -> str:
@@ -798,7 +800,15 @@ def ensure_database() -> None:
 @app.on_event("startup")
 def startup() -> None:
     init_database()
-    if os.getenv("HOMESTOCK_RESET_DATA_ON_START", "").strip() == "1":
+    marker = ""
+    try:
+        marker = DATA_RESET_MARKER_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        marker = ""
+    if (
+        os.getenv("HOMESTOCK_RESET_DATA_ON_START", "").strip() == "1"
+        or (FORCE_DATA_RESET_VERSION and marker != FORCE_DATA_RESET_VERSION)
+    ):
         reset_all_homestock_data()
 
 
@@ -821,6 +831,8 @@ def reset_all_homestock_data() -> None:
                 file_path.unlink()
         except OSError:
             pass
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    DATA_RESET_MARKER_FILE.write_text(FORCE_DATA_RESET_VERSION or utc_now(), encoding="utf-8")
 
 
 def normalize_email(email: str) -> str:
@@ -1201,6 +1213,11 @@ def health():
         "pollinations_models": POLLINATIONS_IMAGE_MODELS,
         "image_size": {"width": IMAGE_WIDTH, "height": IMAGE_HEIGHT},
         "image_cache_items": len(load_image_cache()),
+        "data_reset_version": (
+            DATA_RESET_MARKER_FILE.read_text(encoding="utf-8").strip()
+            if DATA_RESET_MARKER_FILE.exists()
+            else ""
+        ),
         "allow_image_fallback": ALLOW_IMAGE_FALLBACK,
         "key_source": key_source_label(),
         "key_masked": masked_api_key(),
