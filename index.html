@@ -505,12 +505,12 @@ input[type=file]{display:none}
   </div>
   <div style="padding:0 20px 10px;color:rgba(255,255,255,.6);font-size:12px">AI работает через Railway. Ноутбук не нужен — открывайте приложение по публичной ссылке.</div><div class="camera-controls">
     <div class="ctrl-row">
-      <label class="ctrl-btn">📷 Камера<input type="file" id="inp-camera" accept="image/*" capture="environment"></label>
-      <label class="ctrl-btn">🖼 Галерея<input type="file" id="inp-gallery" accept="image/*"></label>
+      <label class="ctrl-btn">📷 Камера<input type="file" id="inp-camera-legacy" accept="image/*" capture="environment"></label>
+      <label class="ctrl-btn">🖼 Галерея<input type="file" id="inp-gallery-legacy" accept="image/*"></label>
     </div>
     <div class="ctrl-row">
-      <button class="ctrl-btn" id="cam-reset-btn" style="display:none">Сбросить</button>
-      <button class="ctrl-btn primary" id="cam-recognize-btn" style="display:none">Распознать</button>
+      <button class="ctrl-btn" id="cam-reset-btn-legacy" style="display:none">Сбросить</button>
+      <button class="ctrl-btn primary" id="cam-recognize-btn-legacy" style="display:none">Распознать</button>
     </div>
   </div>
 </div>
@@ -767,13 +767,13 @@ input[type=file]{display:none}
 .auth-grid .search-input{grid-column:span 2}
 .auth-grid .small-btn{width:100%;min-height:46px}
 #cloud-auth-card{border:1px solid rgba(119,178,140,.24);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(235,248,239,.88))}
-.entry-gate{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:
+.entry-gate{position:fixed;left:50%;top:0;bottom:0;right:auto;transform:translateX(-50%);width:100vw;max-width:430px;z-index:1000;display:none;padding:18px;overflow-x:hidden;background:
   radial-gradient(circle at 18% 12%, rgba(245,190,128,.52), transparent 28%),
   radial-gradient(circle at 85% 8%, rgba(255,255,255,.8), transparent 22%),
   linear-gradient(180deg,#fbf6ee 0%,#efe5d8 100%);color:#17120d;overflow:auto}
-.entry-gate.show{display:flex}
-.entry-shell{width:min(100%,430px);min-height:min(760px,100dvh - 30px);display:flex;flex-direction:column;justify-content:center;gap:16px}
-.entry-card{position:relative;overflow:hidden;border-radius:36px;padding:26px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.82);box-shadow:0 30px 80px rgba(72,44,18,.16);backdrop-filter:blur(20px)}
+.entry-gate.show{display:block}
+.entry-shell{width:100%;max-width:430px;min-height:min(760px,100dvh - 36px);margin:0 auto;display:flex;flex-direction:column;justify-content:center;gap:16px}
+.entry-card{width:100%;position:relative;overflow:hidden;border-radius:36px;padding:26px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.82);box-shadow:0 30px 80px rgba(72,44,18,.16);backdrop-filter:blur(20px)}
 .entry-card::before{content:'';position:absolute;right:-80px;top:-90px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(223,138,69,.32),transparent 66%);pointer-events:none}
 .entry-logo{width:64px;height:64px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1f1711,#7a431d);color:#fff;font-size:28px;font-weight:900;box-shadow:0 18px 40px rgba(44,25,9,.22);position:relative;z-index:1}
 .entry-brand{position:relative;z-index:1;margin-top:18px;font-size:46px;font-weight:900;letter-spacing:-.07em;line-height:.92}
@@ -807,6 +807,48 @@ input[type=file]{display:none}
   .entry-brand{font-size:40px}
   .entry-title,.entry-auth-title{font-size:31px}
   .entry-art{height:160px}
+}
+
+/* Stable V1 layout guardrails: keep every card inside the 320-430px app shell. */
+.shell,.screen,.entry-gate{overscroll-behavior:contain}
+.screen{padding-left:0;padding-right:0;scrollbar-gutter:stable both-edges}
+.fab{display:none!important}
+button,input,select,textarea,label{max-width:100%;min-width:0}
+.entry-row,.entry-select-grid,.settings-preferences,.toolbar-grid,.action-grid,.settings-actions,.home-actions,.plan-toolbar,.simple-grid,.stats-grid{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.entry-input,.entry-select,.search-input,.sort-select{min-width:0;width:100%}
+.entry-card *,.entry-select-grid > label,.settings-preferences > label,.entry-row > *{min-width:0;max-width:100%}
+.entry-select-grid,.settings-preferences,.entry-row,.entry-actions,.entry-auth-card{width:100%;min-width:0;overflow:hidden}
+.entry-btn,.entry-social,.small-btn,.home-action-btn,.action-btn,.ctrl-btn,.camera-primary,.camera-secondary,.camera-tertiary,.quick-add-option{white-space:normal;overflow-wrap:anywhere;line-height:1.18}
+.confirm-title,.entry-title,.entry-auth-title,.entry-brand,.detail-name,.plan-hero-title,.home-title{overflow-wrap:anywhere;text-wrap:balance}
+.item-card,.plan-card,.v3-card,.simple-card,.analytics-card,.settings-card,.toolbar-card,.field-group,.qty-section,.prog-section,.history-item{max-width:100%;overflow:hidden}
+.item-right,.v3-card-bottom,.simple-row,.mini-item,.field-row{min-width:0}
+.item-name,.item-sub,.item-days,.v3-card-title,.v3-card-meta,.v3-days,.simple-row-title,.simple-row-sub,.mini-item span,.mini-item strong{max-width:100%;min-width:0}
+.mini-item{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center}
+.mini-item strong{overflow:hidden;text-overflow:ellipsis;text-align:right}
+.home-header-top{grid-template-columns:minmax(0,1fr) clamp(106px,34vw,150px)}
+.home-add-btn{width:clamp(106px,34vw,150px);height:clamp(106px,34vw,150px);font-size:clamp(76px,25vw,112px);border-radius:clamp(26px,8vw,36px)}
+.home-title{font-size:clamp(31px,9.5vw,38px)}
+.summary-strip,.plan-hero-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+.summary-card,.plan-metric{min-width:0}
+.sc-num,.analytics-big,.plan-metric strong{font-size:clamp(24px,8vw,34px)}
+.qty-control{gap:8px}
+.qty-btn{width:clamp(44px,13vw,52px);height:clamp(44px,13vw,52px);flex:0 0 auto}
+.qty-num{font-size:clamp(42px,14vw,56px)}
+.camera-window{max-height:calc(100dvh - 250px)}
+.camera-premium .camera-dock{grid-template-columns:minmax(0,1fr) minmax(82px,.36fr)}
+.bottom-nav{max-height:calc(78px + env(safe-area-inset-bottom,0px))}
+.nav-btn{min-width:0;overflow:hidden}
+.nav-btn span:last-child{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media (max-width:370px){
+  .entry-row,.entry-select-grid,.settings-preferences,.toolbar-grid,.action-grid,.settings-actions,.home-actions,.plan-toolbar,.simple-grid{grid-template-columns:1fr}
+  .home-header{margin-left:12px;margin-right:12px;padding-left:18px;padding-right:18px}
+  .home-header-top{gap:10px}
+  .summary-strip{gap:7px;padding-left:12px;padding-right:12px}
+  .summary-card{padding:13px 10px}
+  .bottom-nav{gap:3px;padding-left:7px;padding-right:7px}
+  .nav-btn{padding:8px 4px;font-size:10px}
+  .camera-premium .camera-dock{grid-template-columns:1fr}
+  .camera-premium .camera-secondary{min-height:52px}
 }
 </style>
 
