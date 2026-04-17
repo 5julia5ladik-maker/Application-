@@ -3847,7 +3847,8 @@ async function handleEntryEmail(registerMode){
 async function handleSocialLogin(provider){
   const providerName = {google:'Google', apple:'Apple', facebook:'Facebook'}[provider] || provider
   try{
-    const r = await fetch('/api/auth/oauth/' + provider + '/start', {cache:'no-store', credentials:'same-origin'})
+    const qs = new URLSearchParams({language: entryPrefs.language || 'ru', currency: entryPrefs.currency || 'USD'})
+    const r = await fetch('/api/auth/oauth/' + provider + '/start?' + qs.toString(), {cache:'no-store', credentials:'same-origin'})
     const data = await r.json().catch(() => ({}))
     if(r.ok && data.url){
       location.href = data.url
@@ -3935,6 +3936,18 @@ async function bootstrapEntryGate(){
   if(clientHardResetNeeded){
     try{ await authRequest(AUTH_LOGOUT_URL, {}) }catch(e){}
     authState = {authenticated:false}
+  }
+  const oauthParams = new URLSearchParams(location.search)
+  if(oauthParams.get('oauth') === 'google'){
+    if(oauthParams.get('status') === 'success'){
+      localStorage.setItem(CLIENT_RESET_KEY, '1')
+      markEntryFlowDone('account')
+      history.replaceState({}, document.title, location.pathname)
+      showToast('Google login complete')
+    }else if(oauthParams.get('status') === 'error'){
+      history.replaceState({}, document.title, location.pathname)
+      showToast('Google login error: ' + (oauthParams.get('message') || 'failed'))
+    }
   }
   await loadAuthStatus()
   const user = authState && authState.user ? authState.user : null

@@ -11,13 +11,13 @@ import sqlite3
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import quote_plus
+from urllib.parse import quote_plus, urlencode
 
 import requests
 from requests.adapters import HTTPAdapter
 from fastapi import Body, FastAPI, File, Form, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from urllib3.util.retry import Retry
 
 try:
@@ -47,6 +47,7 @@ SESSION_COOKIE_SECURE = (
     os.getenv("SESSION_COOKIE_SECURE", "1" if os.getenv("RAILWAY_ENVIRONMENT") else "0").strip()
     == "1"
 )
+OAUTH_REDIRECT_BASE = os.getenv("OAUTH_REDIRECT_BASE", "").strip().rstrip("/")
 GEMINI_MODEL = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
 GEMINI_RECOGNITION_MODELS = [
     model.strip()
@@ -1001,6 +1002,16 @@ def create_household_for_user(user_id: str, name: str) -> str:
     return household_id
 
 
+def ensure_user_household(user_id: str, name: str = "My Home") -> str:
+    existing = db_one(
+        "SELECT household_id FROM household_members WHERE user_id = ? ORDER BY created_at ASC LIMIT 1",
+        (user_id,),
+    )
+    if existing and existing.get("household_id"):
+        return existing["household_id"]
+    return create_household_for_user(user_id, name)
+
+
 def load_state() -> dict:
     if not STATE_FILE.exists():
         return {"items": [], "photos": {}}
@@ -1091,6 +1102,80 @@ def masked_pollinations_key() -> str:
     if len(POLLINATIONS_API_KEY) <= 12:
         return "***"
     return f"{POLLINATIONS_API_KEY[:6]}...{POLLINATIONS_API_KEY[-4:]}"
+
+
+def public_base_url(request: Request) -> str:
+    if OAUTH_REDIRECT_BASE:
+        return OAUTH_REDIRECT_BASE
+    forwarded_proto = request.headers.get("x-forwarded-proto", "").split(",")[0].strip()
+    forwarded_host = request.headers.get("x-forwarded-host", "").split(",")[0].strip()
+    if forwarded_host:
+        return f"{forwarded_proto or 'https'}://{forwarded_host}".rstrip("/")
+    return str(request.base_url).rstrip("/")
+
+
+def make_oauth_state(provider: str, language: str = "ru", currency: str = "USD") -> str:
+    payload = {
+        "provider": provider,
+        "language": (language or "ru")[:12],
+        "currency": (currency or "USD").upper()[:8],
+        "nonce": secrets.token_urlsafe(16),
+        "ts": int(time.time()),
+    }
+    body = base64.urlsafe_b64encode(
+        json.dumps(payload, separators=(",", ":"), ensure_ascii=False).encode("utf-8")
+    ).decode("ascii").rstrip("=")
+    sig = hmac.new(SECRET_KEY.encode("utf-8"), body.encode("ascii"), hashlib.sha256).hexdigest()[:32]
+    return f"{body}.{sig}"
+
+
+def parse_oauth_state(state: str, provider: str) -> dict:
+    try:
+        body, sig = (state or "").split(".", 1)
+        expected = hmac.new(SECRET_KEY.encode("utf-8"), body.encode("ascii"), hashlib.sha256).hexdigest()[:32]
+        if not hmac.compare_digest(sig, expected):
+            raise ValueError("Bad OAuth state signature")
+        padded = body + "=" * (-len(body) % 4)
+        payload = json.loads(base64.urlsafe_b64decode(padded.encode("ascii")).decode("utf-8"))
+        if payload.get("provider") != provider:
+            raise ValueError("Bad OAuth provider")
+        if int(time.time()) - int(payload.get("ts") or 0) > 10 * 60:
+            raise ValueError("OAuth state expired")
+        return payload
+    except Exception as exc:
+        raise ValueError("Invalid OAuth state") from exc
+
+
+def get_or_create_oauth_user(email: str, name: str, language: str, currency: str) -> dict:
+    email = normalize_email(email)
+    if not email or "@" not in email:
+        raise ValueError("Google account did not provide a verified email")
+
+    existing = db_one("SELECT id, email, name FROM users WHERE email = ?", (email,))
+    if existing:
+        ensure_user_household(existing["id"], "My Home")
+        return existing
+
+    user_id = "usr_" + secrets.token_urlsafe(12)
+    display_name = (name or email.split("@")[0] or "User").strip()[:80]
+    db_execute(
+        """
+        INSERT INTO users (id, email, password_hash, name, language, currency, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (
+            user_id,
+            email,
+            hash_password("oauth:" + secrets.token_urlsafe(32)),
+            display_name,
+            (language or "ru")[:12],
+            (currency or "USD").upper()[:8],
+            utc_now(),
+        ),
+    )
+    household_id = create_household_for_user(user_id, "My Home")
+    save_household_state(household_id, default_state())
+    return {"id": user_id, "email": email, "name": display_name}
 
 
 def stringify_error(data) -> str:
@@ -1294,7 +1379,7 @@ def auth_logout(request: Request):
 
 
 @app.get("/api/auth/oauth/{provider}/start")
-def auth_oauth_start(provider: str):
+def auth_oauth_start(provider: str, request: Request):
     provider = (provider or "").strip().lower()
     config = {
         "google": ("GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"),
@@ -1319,6 +1404,25 @@ def auth_oauth_start(provider: str):
             },
         )
 
+    if provider == "google":
+        redirect_uri = f"{public_base_url(request)}/api/auth/oauth/google/callback"
+        state = make_oauth_state(
+            "google",
+            request.query_params.get("language") or "ru",
+            request.query_params.get("currency") or "USD",
+        )
+        url = "https://accounts.google.com/o/oauth2/v2/auth?" + urlencode(
+            {
+                "client_id": os.getenv("GOOGLE_CLIENT_ID", "").strip(),
+                "redirect_uri": redirect_uri,
+                "response_type": "code",
+                "scope": "openid email profile",
+                "state": state,
+                "prompt": "select_account",
+            }
+        )
+        return {"ok": True, "provider": "google", "url": url, "redirect_uri": redirect_uri}
+
     return JSONResponse(
         status_code=501,
         content={
@@ -1327,6 +1431,70 @@ def auth_oauth_start(provider: str):
             "provider": provider,
         },
     )
+
+
+@app.get("/api/auth/oauth/google/callback")
+def auth_google_callback(request: Request, code: str = "", state: str = "", error: str = ""):
+    if error:
+        return RedirectResponse(url=f"/?oauth=google&status=error&message={quote_plus(error)}")
+    if not code:
+        return RedirectResponse(url="/?oauth=google&status=error&message=missing_code")
+
+    try:
+        state_payload = parse_oauth_state(state, "google")
+    except ValueError:
+        return RedirectResponse(url="/?oauth=google&status=error&message=invalid_state")
+
+    client_id = os.getenv("GOOGLE_CLIENT_ID", "").strip()
+    client_secret = os.getenv("GOOGLE_CLIENT_SECRET", "").strip()
+    if not client_id or not client_secret:
+        return RedirectResponse(url="/?oauth=google&status=error&message=missing_google_credentials")
+
+    redirect_uri = f"{public_base_url(request)}/api/auth/oauth/google/callback"
+    try:
+        token_response = HTTP.post(
+            "https://oauth2.googleapis.com/token",
+            data={
+                "code": code,
+                "client_id": client_id,
+                "client_secret": client_secret,
+                "redirect_uri": redirect_uri,
+                "grant_type": "authorization_code",
+            },
+            timeout=25,
+        )
+        token_data = token_response.json()
+        if token_response.status_code >= 400:
+            raise RuntimeError(stringify_error(token_data))
+
+        access_token = token_data.get("access_token")
+        if not access_token:
+            raise RuntimeError("Google did not return access_token")
+
+        profile_response = HTTP.get(
+            "https://openidconnect.googleapis.com/v1/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=25,
+        )
+        profile = profile_response.json()
+        if profile_response.status_code >= 400:
+            raise RuntimeError(stringify_error(profile))
+        if profile.get("email_verified") is False:
+            raise RuntimeError("Google email is not verified")
+
+        user = get_or_create_oauth_user(
+            profile.get("email") or "",
+            profile.get("name") or "",
+            state_payload.get("language") or "ru",
+            state_payload.get("currency") or "USD",
+        )
+        token = create_session(user["id"])
+        response = RedirectResponse(url="/?oauth=google&status=success")
+        set_session_cookie(response, token)
+        return response
+    except Exception as exc:
+        message = quote_plus(str(exc)[:180] or "google_oauth_failed")
+        return RedirectResponse(url=f"/?oauth=google&status=error&message={message}")
 
 
 @app.get("/api/auth/me")
