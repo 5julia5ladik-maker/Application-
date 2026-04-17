@@ -862,10 +862,12 @@ const AUTH_ME_URL = '/api/auth/me'
 const AUTH_LOGIN_URL = '/api/auth/login'
 const AUTH_REGISTER_URL = '/api/auth/register'
 const AUTH_LOGOUT_URL = '/api/auth/logout'
+const AUTH_GOOGLE_TOKEN_URL = '/api/auth/google/access-token'
 const USER_PREFS_URL = '/api/user/preferences'
 const HOUSEHOLD_INVITE_URL = '/api/household/invite'
 const HOUSEHOLD_JOIN_URL = '/api/household/join'
 let items = []
+let serverInfo = {}
 const ITEMS_KEY = 'hs_items_stable'
 const PHOTOS_KEY = 'hs_item_photos_v1'
 const ENTRY_PREFS_KEY = 'hs_entry_preferences_v1'
@@ -1000,12 +1002,13 @@ async function syncStateToServer(){
 async function loadServerInfo(){
   const statusEl = document.getElementById('network-status')
   const urlEl = document.getElementById('network-url')
-  if(!statusEl || !urlEl) return
 
   try{
     const r = await fetch(INFO_API_URL, {cache:'no-store'})
     if(!r.ok) throw new Error('info load failed')
     const data = await r.json()
+    serverInfo = data || {}
+    if(!statusEl || !urlEl) return serverInfo
     const urls = Array.isArray(data.urls) ? data.urls : []
     const isHosted = !location.hostname.includes('127.0.0.1') && location.hostname !== 'localhost'
     const phoneUrl = isHosted ? window.location.origin : (urls.find(url => !url.includes('127.0.0.1')) || urls[0] || window.location.origin)
@@ -1017,6 +1020,7 @@ async function loadServerInfo(){
     statusEl.textContent = 'Приложение работает. Основной адрес — текущая ссылка в браузере.'
     urlEl.textContent = window.location.origin
   }
+  return serverInfo
 }
 function stripPhotosFromItems(list){
   return list.map(item => {
@@ -3846,6 +3850,10 @@ async function handleEntryEmail(registerMode){
 }
 async function handleSocialLogin(provider){
   const providerName = {google:'Google', apple:'Apple', facebook:'Facebook'}[provider] || provider
+  if(provider === 'google'){
+    const ok = await handleGoogleTokenLogin()
+    if(ok) return
+  }
   try{
     const qs = new URLSearchParams({language: entryPrefs.language || 'ru', currency: entryPrefs.currency || 'USD'})
     const r = await fetch('/api/auth/oauth/' + provider + '/start?' + qs.toString(), {cache:'no-store', credentials:'same-origin'})
@@ -3857,6 +3865,72 @@ async function handleSocialLogin(provider){
     showToast(data.error || (providerName + ': OAuth needs setup'))
   }catch(e){
     showToast(providerName + ': OAuth needs setup')
+  }
+}
+async function getGoogleClientId(){
+  if(serverInfo.google_client_id) return serverInfo.google_client_id
+  const info = await loadServerInfo()
+  return info && info.google_client_id ? info.google_client_id : ''
+}
+function loadGoogleIdentityScript(){
+  return new Promise((resolve, reject) => {
+    if(window.google && window.google.accounts && window.google.accounts.oauth2){
+      resolve()
+      return
+    }
+    const existing = document.querySelector('script[data-google-identity]')
+    if(existing){
+      existing.addEventListener('load', () => resolve(), {once:true})
+      existing.addEventListener('error', reject, {once:true})
+      return
+    }
+    const script = document.createElement('script')
+    script.src = 'https://accounts.google.com/gsi/client'
+    script.async = true
+    script.defer = true
+    script.dataset.googleIdentity = '1'
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error('Google script failed'))
+    document.head.appendChild(script)
+  })
+}
+async function handleGoogleTokenLogin(){
+  try{
+    const clientId = await getGoogleClientId()
+    if(!clientId) return false
+    await loadGoogleIdentityScript()
+    const hadGuestItems = (loadJSON(ITEMS_KEY, []) || []).length > 0
+    if(hadGuestItems) loadLocalStateIntoApp()
+    showToast('Открываю Google...')
+    const tokenResponse = await new Promise((resolve, reject) => {
+      const client = google.accounts.oauth2.initTokenClient({
+        client_id: clientId,
+        scope: 'openid email profile',
+        prompt: 'select_account',
+        callback: response => {
+          if(response && response.access_token) resolve(response)
+          else reject(new Error(response && response.error ? response.error : 'Google login cancelled'))
+        },
+        error_callback: error => reject(new Error(error && error.message ? error.message : 'Google popup blocked'))
+      })
+      client.requestAccessToken()
+    })
+    await authRequest(AUTH_GOOGLE_TOKEN_URL, {
+      access_token: tokenResponse.access_token,
+      language: entryPrefs.language || 'ru',
+      currency: entryPrefs.currency || 'USD'
+    })
+    markEntryFlowDone('account')
+    await loadAuthStatus()
+    if(hadGuestItems) await transferGuestStateToCloud()
+    else await loadServerState()
+    renderAuthPanel()
+    hideEntryGate()
+    showToast('Google login complete')
+    return true
+  }catch(e){
+    showToast('Google: ' + (e.message || 'login failed'))
+    return true
   }
 }
 async function startGuestMode(){

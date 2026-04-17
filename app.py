@@ -1497,6 +1497,60 @@ def auth_google_callback(request: Request, code: str = "", state: str = "", erro
         return RedirectResponse(url=f"/?oauth=google&status=error&message={message}")
 
 
+@app.post("/api/auth/google/access-token")
+def auth_google_access_token(payload: dict = Body(...)):
+    access_token = str(payload.get("access_token") or "").strip()
+    if not access_token:
+        return JSONResponse(
+            {"ok": False, "error": "Google token is missing"},
+            status_code=400,
+        )
+
+    try:
+        profile_response = HTTP.get(
+            "https://openidconnect.googleapis.com/v1/userinfo",
+            headers={"Authorization": f"Bearer {access_token}"},
+            timeout=25,
+        )
+        profile = profile_response.json()
+        if profile_response.status_code >= 400:
+            return JSONResponse(
+                {"ok": False, "error": stringify_error(profile)},
+                status_code=401,
+            )
+        if profile.get("email_verified") is False:
+            return JSONResponse(
+                {"ok": False, "error": "Google email is not verified"},
+                status_code=401,
+            )
+
+        user = get_or_create_oauth_user(
+            profile.get("email") or "",
+            profile.get("name") or "",
+            str(payload.get("language") or "ru"),
+            str(payload.get("currency") or "USD"),
+        )
+        token = create_session(user["id"])
+        response = JSONResponse(
+            {
+                "ok": True,
+                "user": {
+                    "email": user["email"],
+                    "name": user["name"],
+                    "language": user["language"],
+                    "currency": user["currency"],
+                },
+            }
+        )
+        set_session_cookie(response, token)
+        return response
+    except Exception as exc:
+        return JSONResponse(
+            {"ok": False, "error": str(exc)[:180] or "Google login failed"},
+            status_code=502,
+        )
+
+
 @app.get("/api/auth/me")
 def auth_me(request: Request):
     context = get_current_context(request)
@@ -1611,6 +1665,7 @@ def get_info():
         "image_size": {"width": IMAGE_WIDTH, "height": IMAGE_HEIGHT},
         "image_cache_items": len(load_image_cache()),
         "allow_image_fallback": ALLOW_IMAGE_FALLBACK,
+        "google_client_id": os.getenv("GOOGLE_CLIENT_ID", "").strip(),
     }
 
 
