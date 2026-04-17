@@ -736,6 +736,8 @@ def init_database() -> None:
             email TEXT UNIQUE NOT NULL,
             password_hash TEXT NOT NULL,
             name TEXT NOT NULL,
+            language TEXT NOT NULL DEFAULT 'ru',
+            currency TEXT NOT NULL DEFAULT 'USD',
             created_at TEXT NOT NULL
         )
         """,
@@ -776,6 +778,14 @@ def init_database() -> None:
     with db_connect() as conn:
         for statement in statements:
             conn.execute(statement)
+        for alter in (
+            "ALTER TABLE users ADD COLUMN language TEXT NOT NULL DEFAULT 'ru'",
+            "ALTER TABLE users ADD COLUMN currency TEXT NOT NULL DEFAULT 'USD'",
+        ):
+            try:
+                conn.execute(alter)
+            except Exception:
+                pass
         conn.commit()
     DB_READY = True
 
@@ -869,7 +879,15 @@ def get_current_context(request: Request) -> dict | None:
 
     row = db_one(
         """
-        SELECT u.id AS user_id, u.email, u.name, hm.household_id, hm.role, h.name AS household_name
+        SELECT
+            u.id AS user_id,
+            u.email,
+            u.name,
+            u.language,
+            u.currency,
+            hm.household_id,
+            hm.role,
+            h.name AS household_name
         FROM sessions s
         JOIN users u ON u.id = s.user_id
         LEFT JOIN household_members hm ON hm.user_id = u.id
@@ -1172,6 +1190,8 @@ def auth_register(payload: dict = Body(...)):
     email = normalize_email(str(payload.get("email") or ""))
     password = str(payload.get("password") or "")
     name = str(payload.get("name") or email.split("@")[0] or "User").strip()[:80]
+    language = str(payload.get("language") or "ru").strip().lower()[:12] or "ru"
+    currency = str(payload.get("currency") or "USD").strip().upper()[:8] or "USD"
     household_name = str(payload.get("household_name") or "Мой дом").strip()[:80]
 
     if "@" not in email or len(password) < 6:
@@ -1188,8 +1208,11 @@ def auth_register(payload: dict = Body(...)):
 
     user_id = "usr_" + secrets.token_urlsafe(12)
     db_execute(
-        "INSERT INTO users (id, email, password_hash, name, created_at) VALUES (?, ?, ?, ?, ?)",
-        (user_id, email, hash_password(password), name, utc_now()),
+        """
+        INSERT INTO users (id, email, password_hash, name, language, currency, created_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+        """,
+        (user_id, email, hash_password(password), name, language, currency, utc_now()),
     )
     household_id = create_household_for_user(user_id, household_name)
     save_household_state(household_id, load_state())
@@ -1238,6 +1261,8 @@ def auth_me(request: Request):
             "id": context["user_id"],
             "email": context["email"],
             "name": context["name"],
+            "language": context.get("language") or "ru",
+            "currency": context.get("currency") or "USD",
         },
         "household": {
             "id": context["household_id"],
@@ -1245,6 +1270,21 @@ def auth_me(request: Request):
             "role": context["role"],
         },
     }
+
+
+@app.post("/api/user/preferences")
+def update_user_preferences(request: Request, payload: dict = Body(...)):
+    context = require_context(request)
+    if isinstance(context, JSONResponse):
+        return context
+
+    language = str(payload.get("language") or context.get("language") or "ru").strip().lower()[:12] or "ru"
+    currency = str(payload.get("currency") or context.get("currency") or "USD").strip().upper()[:8] or "USD"
+    db_execute(
+        "UPDATE users SET language = ?, currency = ? WHERE id = ?",
+        (language, currency, context["user_id"]),
+    )
+    return {"ok": True, "language": language, "currency": currency}
 
 
 @app.get("/api/household/invite")

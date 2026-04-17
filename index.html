@@ -762,6 +762,8 @@ input[type=file]{display:none}
 </div>
 </div>
 
+<div class="entry-gate" id="entry-gate" aria-modal="true" role="dialog"></div>
+
 <style>
 .toast{white-space:normal;max-width:min(86vw,420px);text-align:center;line-height:1.25}
 .camera-fallback-note{margin:10px 20px 0;padding:12px 14px;border-radius:18px;background:rgba(255,210,150,.12);border:1px solid rgba(255,210,150,.24);color:rgba(255,255,255,.78);font-size:12px;font-weight:700;line-height:1.35}
@@ -769,6 +771,47 @@ input[type=file]{display:none}
 .auth-grid .search-input{grid-column:span 2}
 .auth-grid .small-btn{width:100%;min-height:46px}
 #cloud-auth-card{border:1px solid rgba(119,178,140,.24);background:linear-gradient(180deg,rgba(255,255,255,.96),rgba(235,248,239,.88))}
+.entry-gate{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:18px;background:
+  radial-gradient(circle at 18% 12%, rgba(245,190,128,.52), transparent 28%),
+  radial-gradient(circle at 85% 8%, rgba(255,255,255,.8), transparent 22%),
+  linear-gradient(180deg,#fbf6ee 0%,#efe5d8 100%);color:#17120d;overflow:auto}
+.entry-gate.show{display:flex}
+.entry-shell{width:min(100%,430px);min-height:min(760px,100dvh - 30px);display:flex;flex-direction:column;justify-content:center;gap:16px}
+.entry-card{position:relative;overflow:hidden;border-radius:36px;padding:26px;background:rgba(255,255,255,.72);border:1px solid rgba(255,255,255,.82);box-shadow:0 30px 80px rgba(72,44,18,.16);backdrop-filter:blur(20px)}
+.entry-card::before{content:'';position:absolute;right:-80px;top:-90px;width:220px;height:220px;border-radius:50%;background:radial-gradient(circle,rgba(223,138,69,.32),transparent 66%);pointer-events:none}
+.entry-logo{width:64px;height:64px;border-radius:24px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#1f1711,#7a431d);color:#fff;font-size:28px;font-weight:900;box-shadow:0 18px 40px rgba(44,25,9,.22);position:relative;z-index:1}
+.entry-brand{position:relative;z-index:1;margin-top:18px;font-size:46px;font-weight:900;letter-spacing:-.07em;line-height:.92}
+.entry-brand span{color:#8a6546}
+.entry-sub{position:relative;z-index:1;margin-top:12px;font-size:15px;line-height:1.45;color:rgba(23,18,13,.62);max-width:320px}
+.entry-label{font-size:11px;font-weight:900;letter-spacing:.16em;text-transform:uppercase;color:rgba(23,18,13,.48);margin-bottom:8px}
+.entry-select-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px;position:relative;z-index:1}
+.entry-select{width:100%;height:52px;border:1px solid rgba(71,45,18,.1);border-radius:18px;background:rgba(255,255,255,.78);font:800 14px 'DM Sans',sans-serif;color:#17120d;padding:0 14px;outline:none}
+.entry-btn{width:100%;border:none;border-radius:20px;padding:16px 18px;font:900 15px 'DM Sans',sans-serif;cursor:pointer;background:#17120d;color:#fff;box-shadow:0 18px 34px rgba(23,18,13,.18)}
+.entry-btn.secondary{background:rgba(255,255,255,.76);color:#17120d;border:1px solid rgba(71,45,18,.1);box-shadow:none}
+.entry-btn.ghost{background:rgba(31,23,17,.07);color:#17120d;box-shadow:none}
+.entry-actions{display:grid;gap:10px;margin-top:18px;position:relative;z-index:1}
+.entry-progress{display:flex;gap:7px;margin-bottom:16px}
+.entry-dot{height:7px;flex:1;border-radius:999px;background:rgba(23,18,13,.12)}
+.entry-dot.active{background:#17120d}
+.entry-art{height:190px;border-radius:28px;background:
+  radial-gradient(circle at 70% 28%,rgba(223,138,69,.34),transparent 28%),
+  linear-gradient(145deg,rgba(255,255,255,.92),rgba(238,222,204,.72));display:flex;align-items:center;justify-content:center;font-size:74px;font-weight:900;color:#7a431d;margin-bottom:20px;border:1px solid rgba(255,255,255,.7)}
+.entry-title{font-size:34px;font-weight:900;line-height:1;letter-spacing:-.055em}
+.entry-auth-title{font-size:36px;font-weight:900;letter-spacing:-.06em;line-height:1.02}
+.entry-auth-card{display:grid;gap:10px;margin-top:18px}
+.entry-social{height:50px;border-radius:18px;border:1px solid rgba(71,45,18,.1);background:rgba(255,255,255,.78);font:850 14px 'DM Sans',sans-serif;color:#17120d;cursor:pointer}
+.entry-divider{display:flex;align-items:center;gap:10px;color:rgba(23,18,13,.45);font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;margin:6px 0}
+.entry-divider::before,.entry-divider::after{content:'';height:1px;background:rgba(71,45,18,.12);flex:1}
+.entry-input{height:52px;border:1px solid rgba(71,45,18,.1);border-radius:18px;background:rgba(255,255,255,.82);font:700 15px 'DM Sans',sans-serif;color:#17120d;padding:0 15px;outline:none}
+.entry-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.settings-preferences{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+.settings-auth-actions{display:grid;gap:10px;margin-top:12px}
+@media (max-width:390px){
+  .entry-card{padding:22px;border-radius:30px}
+  .entry-brand{font-size:40px}
+  .entry-title,.entry-auth-title{font-size:31px}
+  .entry-art{height:160px}
+}
 </style>
 
 <script>
@@ -781,11 +824,15 @@ const AUTH_ME_URL = '/api/auth/me'
 const AUTH_LOGIN_URL = '/api/auth/login'
 const AUTH_REGISTER_URL = '/api/auth/register'
 const AUTH_LOGOUT_URL = '/api/auth/logout'
+const USER_PREFS_URL = '/api/user/preferences'
 const HOUSEHOLD_INVITE_URL = '/api/household/invite'
 const HOUSEHOLD_JOIN_URL = '/api/household/join'
 let items = []
 const ITEMS_KEY = 'hs_items_stable'
 const PHOTOS_KEY = 'hs_item_photos_v1'
+const ENTRY_PREFS_KEY = 'hs_entry_preferences_v1'
+const ENTRY_MODE_KEY = 'hs_entry_mode_v1'
+const ENTRY_DONE_KEY = 'hs_entry_done_v1'
 
 function loadJSON(key, fallback){
   try{
@@ -846,6 +893,11 @@ function savePhotosMap(map){
   saveJSON(PHOTOS_KEY, map)
 }
 async function loadServerState(){
+  if(!authState || !authState.authenticated){
+    loadLocalStateIntoApp()
+    serverLoadDone = true
+    return
+  }
   try{
     const r = await fetch(STATE_API_URL, {cache:'no-store'})
     if(!r.ok) throw new Error('state load failed')
@@ -867,6 +919,11 @@ async function loadServerState(){
   }
 }
 async function syncStateToServer(){
+  if(!authState || !authState.authenticated){
+    saveJSON(ITEMS_KEY, items)
+    saveJSON(PHOTOS_KEY, getPhotosMap())
+    return true
+  }
   try{
     const r = await fetch(STATE_API_URL, {
       method:'POST',
@@ -3397,7 +3454,338 @@ function setupAuthPanel(){
     try{ await navigator.clipboard.writeText(code); showToast('Код скопирован') }
     catch(e){ showToast('Код: ' + code) }
   }
-  loadAuthStatus()
+}
+
+const ENTRY_LANGUAGES = [
+  {code:'ru', label:'Русский'},
+  {code:'en', label:'English'},
+  {code:'pl', label:'Polski'},
+  {code:'uk', label:'Українська'}
+]
+const ENTRY_CURRENCIES = [
+  {code:'USD', label:'USD $'},
+  {code:'EUR', label:'EUR €'},
+  {code:'PLN', label:'PLN zł'},
+  {code:'UAH', label:'UAH ₴'},
+  {code:'RUB', label:'RUB ₽'}
+]
+const ENTRY_COPY = {
+  ru: {
+    sub:'Домашние запасы, покупки и AI-камера в одном спокойном приложении.',
+    lang:'Язык', currency:'Валюта', start:'Продолжить',
+    slides:[
+      ['Сканируй продукты','Сделай фото, а AI сам распознает товар и подготовит красивую карточку.','AI'],
+      ['Знай, что заканчивается','HomeStock простыми словами показывает, что скоро нужно купить.','3д'],
+      ['Один список для дома','Телефон, ПК и семья видят один общий домашний список.','∞']
+    ],
+    next:'Дальше', done:'Перейти ко входу',
+    authTitle:'Войти в HomeStock', authSub:'Создай аккаунт для синхронизации или начни как гость на этом устройстве.',
+    google:'Продолжить с Google', apple:'Продолжить с Apple', facebook:'Продолжить с Facebook',
+    email:'Email', password:'Пароль', login:'Войти', register:'Создать аккаунт', guest:'Продолжить как гость',
+    or:'или', socialSoon:'OAuth подключим следующим шагом. Сейчас работает email и гость.',
+    guestMode:'Гостевой режим: данные сохраняются только на этом устройстве.',
+    accountMode:'Cloud sync включен',
+    openAuth:'Войти / создать аккаунт',
+    prefsSaved:'Настройки сохранены',
+    transferred:'Аккаунт создан, гостевые данные перенесены в cloud'
+  },
+  en: {
+    sub:'Home inventory, shopping and AI camera in one calm app.',
+    lang:'Language', currency:'Currency', start:'Continue',
+    slides:[
+      ['Scan products','Take one photo and AI helps create a clean product card.','AI'],
+      ['Know what runs out','HomeStock explains what you should buy soon in simple words.','3d'],
+      ['One home list','Phone, PC and family share the same home list.','∞']
+    ],
+    next:'Next', done:'Go to sign in',
+    authTitle:'Sign in to HomeStock', authSub:'Create an account for sync or continue as guest on this device.',
+    google:'Continue with Google', apple:'Continue with Apple', facebook:'Continue with Facebook',
+    email:'Email', password:'Password', login:'Log in', register:'Create account', guest:'Continue as guest',
+    or:'or', socialSoon:'OAuth comes next. Email and guest mode work now.',
+    guestMode:'Guest mode: data stays on this device.',
+    accountMode:'Cloud sync is on',
+    openAuth:'Sign in / create account',
+    prefsSaved:'Preferences saved',
+    transferred:'Account created and guest data moved to cloud'
+  },
+  pl: {
+    sub:'Domowe zapasy, zakupy i kamera AI w jednej spokojnej aplikacji.',
+    lang:'Język', currency:'Waluta', start:'Dalej',
+    slides:[
+      ['Skanuj produkty','Zrób zdjęcie, a AI pomoże dodać produkt.','AI'],
+      ['Wiesz, co się kończy','HomeStock prosto pokazuje, co kupić niedługo.','3d'],
+      ['Jedna lista domu','Telefon, PC i rodzina widzą tę samą listę.','∞']
+    ],
+    next:'Dalej', done:'Przejdź do logowania',
+    authTitle:'Zaloguj się do HomeStock', authSub:'Utwórz konto do synchronizacji albo używaj jako gość.',
+    google:'Kontynuuj z Google', apple:'Kontynuuj z Apple', facebook:'Kontynuuj z Facebook',
+    email:'Email', password:'Hasło', login:'Zaloguj', register:'Utwórz konto', guest:'Kontynuuj jako gość',
+    or:'lub', socialSoon:'OAuth dodamy kolejnym krokiem. Teraz działa email i tryb gościa.',
+    guestMode:'Tryb gościa: dane zostają na tym urządzeniu.',
+    accountMode:'Cloud sync włączony',
+    openAuth:'Zaloguj / utwórz konto',
+    prefsSaved:'Ustawienia zapisane',
+    transferred:'Konto utworzone, dane gościa przeniesione do chmury'
+  },
+  uk: {
+    sub:'Домашні запаси, покупки й AI-камера в одному спокійному застосунку.',
+    lang:'Мова', currency:'Валюта', start:'Продовжити',
+    slides:[
+      ['Скануй продукти','Зроби фото, а AI допоможе додати товар.','AI'],
+      ['Знай, що закінчується','HomeStock просто показує, що скоро купити.','3д'],
+      ['Один список дому','Телефон, ПК і сім’я бачать один список.','∞']
+    ],
+    next:'Далі', done:'До входу',
+    authTitle:'Увійти в HomeStock', authSub:'Створи акаунт для синхронізації або продовж як гість.',
+    google:'Продовжити з Google', apple:'Продовжити з Apple', facebook:'Продовжити з Facebook',
+    email:'Email', password:'Пароль', login:'Увійти', register:'Створити акаунт', guest:'Продовжити як гість',
+    or:'або', socialSoon:'OAuth додамо наступним кроком. Зараз працюють email і гість.',
+    guestMode:'Гість: дані зберігаються тільки на цьому пристрої.',
+    accountMode:'Cloud sync увімкнено',
+    openAuth:'Увійти / створити акаунт',
+    prefsSaved:'Налаштування збережено',
+    transferred:'Акаунт створено, гостьові дані перенесено у cloud'
+  }
+}
+let entryStep = 'welcome'
+let entrySlide = 0
+let entryPrefs = loadJSON(ENTRY_PREFS_KEY, {language:'ru', currency:'USD'})
+
+function entryCopy(){
+  return ENTRY_COPY[entryPrefs.language] || ENTRY_COPY.ru
+}
+function entryEscape(value){
+  return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]))
+}
+function saveEntryPrefs(nextPrefs){
+  entryPrefs = {
+    language: (nextPrefs.language || 'ru').slice(0,12),
+    currency: (nextPrefs.currency || 'USD').slice(0,8).toUpperCase()
+  }
+  saveJSON(ENTRY_PREFS_KEY, entryPrefs)
+  document.documentElement.lang = entryPrefs.language
+}
+function languageOptions(){
+  return ENTRY_LANGUAGES.map(x => `<option value="${x.code}" ${entryPrefs.language === x.code ? 'selected' : ''}>${entryEscape(x.label)}</option>`).join('')
+}
+function currencyOptions(){
+  return ENTRY_CURRENCIES.map(x => `<option value="${x.code}" ${entryPrefs.currency === x.code ? 'selected' : ''}>${entryEscape(x.label)}</option>`).join('')
+}
+function entryDone(){
+  return localStorage.getItem(ENTRY_DONE_KEY) === '1'
+}
+function entryMode(){
+  return localStorage.getItem(ENTRY_MODE_KEY) || ''
+}
+function showEntryGate(step){
+  entryStep = step || entryStep || 'welcome'
+  const gate = document.getElementById('entry-gate')
+  if(!gate) return
+  gate.classList.add('show')
+  renderEntryGate()
+}
+function hideEntryGate(){
+  const gate = document.getElementById('entry-gate')
+  if(gate) gate.classList.remove('show')
+}
+function renderEntryGate(){
+  const gate = document.getElementById('entry-gate')
+  if(!gate) return
+  const c = entryCopy()
+  if(entryStep === 'welcome'){
+    gate.innerHTML = `<div class="entry-shell"><section class="entry-card">
+      <div class="entry-logo">HS</div>
+      <h1 class="entry-brand">Home<span>Stock</span></h1>
+      <p class="entry-sub">${entryEscape(c.sub)}</p>
+      <div class="entry-select-grid">
+        <label><div class="entry-label">${entryEscape(c.lang)}</div><select class="entry-select" id="entry-language">${languageOptions()}</select></label>
+        <label><div class="entry-label">${entryEscape(c.currency)}</div><select class="entry-select" id="entry-currency">${currencyOptions()}</select></label>
+      </div>
+      <div class="entry-actions"><button class="entry-btn" id="entry-start">${entryEscape(c.start)}</button></div>
+    </section></div>`
+    document.getElementById('entry-language').onchange = e => { saveEntryPrefs({...entryPrefs, language:e.target.value}); renderEntryGate(); renderAuthPanel() }
+    document.getElementById('entry-currency').onchange = e => { saveEntryPrefs({...entryPrefs, currency:e.target.value}); renderAuthPanel() }
+    document.getElementById('entry-start').onclick = () => { entryStep = 'onboarding'; entrySlide = 0; renderEntryGate() }
+    return
+  }
+  if(entryStep === 'onboarding'){
+    const slide = c.slides[entrySlide] || c.slides[0]
+    gate.innerHTML = `<div class="entry-shell"><section class="entry-card">
+      <div class="entry-progress">${c.slides.map((_,i) => `<span class="entry-dot ${i === entrySlide ? 'active' : ''}"></span>`).join('')}</div>
+      <div class="entry-art">${entryEscape(slide[2])}</div>
+      <h2 class="entry-title">${entryEscape(slide[0])}</h2>
+      <p class="entry-sub">${entryEscape(slide[1])}</p>
+      <div class="entry-actions">
+        <button class="entry-btn" id="entry-next">${entryEscape(entrySlide >= c.slides.length - 1 ? c.done : c.next)}</button>
+        ${entrySlide ? '<button class="entry-btn secondary" id="entry-back">Назад</button>' : ''}
+      </div>
+    </section></div>`
+    document.getElementById('entry-next').onclick = () => {
+      if(entrySlide < c.slides.length - 1){ entrySlide++; renderEntryGate(); return }
+      entryStep = 'auth'; renderEntryGate()
+    }
+    const back = document.getElementById('entry-back')
+    if(back) back.onclick = () => { entrySlide--; renderEntryGate() }
+    return
+  }
+  gate.innerHTML = `<div class="entry-shell"><section class="entry-card">
+    <div class="entry-logo">HS</div>
+    <h2 class="entry-auth-title">${entryEscape(c.authTitle)}</h2>
+    <p class="entry-sub">${entryEscape(c.authSub)}</p>
+    <div class="entry-auth-card">
+      <button class="entry-social" data-social="google">${entryEscape(c.google)}</button>
+      <button class="entry-social" data-social="apple">${entryEscape(c.apple)}</button>
+      <button class="entry-social" data-social="facebook">${entryEscape(c.facebook)}</button>
+      <div class="entry-divider">${entryEscape(c.or)}</div>
+      <input class="entry-input" id="entry-email" type="email" autocomplete="email" placeholder="${entryEscape(c.email)}">
+      <input class="entry-input" id="entry-password" type="password" autocomplete="current-password" placeholder="${entryEscape(c.password)}">
+      <div class="entry-row">
+        <button class="entry-btn secondary" id="entry-login">${entryEscape(c.login)}</button>
+        <button class="entry-btn" id="entry-register">${entryEscape(c.register)}</button>
+      </div>
+      <button class="entry-btn ghost" id="entry-guest">${entryEscape(c.guest)}</button>
+    </div>
+  </section></div>`
+  gate.querySelectorAll('[data-social]').forEach(btn => btn.onclick = () => showToast(c.socialSoon))
+  document.getElementById('entry-login').onclick = () => handleEntryEmail(false)
+  document.getElementById('entry-register').onclick = () => handleEntryEmail(true)
+  document.getElementById('entry-guest').onclick = startGuestMode
+}
+function loadLocalStateIntoApp(){
+  items = loadJSON(ITEMS_KEY, [])
+  photosCache = loadJSON(PHOTOS_KEY, {})
+  normalizeItems()
+  renderCategoryChips()
+  renderCategoriesScreen()
+  renderAnalytics()
+  scheduleRenderHome()
+}
+async function transferGuestStateToCloud(){
+  if(!authState || !authState.authenticated) return
+  saveJSON(ITEMS_KEY, items)
+  saveJSON(PHOTOS_KEY, getPhotosMap())
+  await syncStateToServer()
+}
+async function handleEntryEmail(registerMode){
+  const c = entryCopy()
+  const email = document.getElementById('entry-email')?.value || ''
+  const password = document.getElementById('entry-password')?.value || ''
+  try{
+    if(registerMode) loadLocalStateIntoApp()
+    await authRequest(registerMode ? AUTH_REGISTER_URL : AUTH_LOGIN_URL, {
+      email,
+      password,
+      name: email.split('@')[0],
+      household_name: 'My Home',
+      language: entryPrefs.language,
+      currency: entryPrefs.currency
+    })
+    localStorage.setItem(ENTRY_DONE_KEY, '1')
+    localStorage.setItem(ENTRY_MODE_KEY, 'account')
+    await loadAuthStatus()
+    if(registerMode){
+      await transferGuestStateToCloud()
+      showToast(c.transferred)
+    }else{
+      await loadServerState()
+      showToast(c.accountMode)
+    }
+    hideEntryGate()
+  }catch(e){
+    showToast(e.message || 'Auth error')
+  }
+}
+async function startGuestMode(){
+  localStorage.setItem(ENTRY_DONE_KEY, '1')
+  localStorage.setItem(ENTRY_MODE_KEY, 'guest')
+  authState = {authenticated:false}
+  loadLocalStateIntoApp()
+  renderAuthPanel()
+  hideEntryGate()
+  showToast(entryCopy().guestMode)
+}
+async function saveUserPreferences(){
+  saveEntryPrefs(entryPrefs)
+  if(authState && authState.authenticated){
+    try{
+      await authRequest(USER_PREFS_URL, entryPrefs)
+      await loadAuthStatus()
+    }catch(e){}
+  }
+  renderAuthPanel()
+  showToast(entryCopy().prefsSaved)
+}
+function ensureSettingsAccountUi(){
+  const card = document.getElementById('cloud-auth-card')
+  if(!card) return
+  const form = document.getElementById('auth-form')
+  if(form) form.style.display = 'none'
+  if(!document.getElementById('settings-preferences')){
+    const prefs = document.createElement('div')
+    prefs.id = 'settings-preferences'
+    prefs.className = 'settings-preferences'
+    card.insertBefore(prefs, document.getElementById('auth-cloud-tools') || null)
+  }
+  if(!document.getElementById('settings-auth-actions')){
+    const actions = document.createElement('div')
+    actions.id = 'settings-auth-actions'
+    actions.className = 'settings-auth-actions'
+    card.appendChild(actions)
+  }
+}
+function renderAuthPanel(){
+  ensureSettingsAccountUi()
+  const form = document.getElementById('auth-form')
+  const tools = document.getElementById('auth-cloud-tools')
+  const prefs = document.getElementById('settings-preferences')
+  const actions = document.getElementById('settings-auth-actions')
+  if(authState && authState.authenticated){
+    const accountUser = authState.user || {}
+    if(accountUser.language || accountUser.currency) saveEntryPrefs({language:accountUser.language || entryPrefs.language, currency:accountUser.currency || entryPrefs.currency})
+  }
+  if(form) form.style.display = 'none'
+  if(prefs){
+    prefs.innerHTML = `<label><div class="entry-label">${entryEscape(entryCopy().lang)}</div><select class="entry-select" id="settings-language">${languageOptions()}</select></label>
+      <label><div class="entry-label">${entryEscape(entryCopy().currency)}</div><select class="entry-select" id="settings-currency">${currencyOptions()}</select></label>`
+    document.getElementById('settings-language').onchange = e => { saveEntryPrefs({...entryPrefs, language:e.target.value}); saveUserPreferences() }
+    document.getElementById('settings-currency').onchange = e => { saveEntryPrefs({...entryPrefs, currency:e.target.value}); saveUserPreferences() }
+  }
+  if(authState && authState.authenticated){
+    if(tools) tools.style.display = 'block'
+    if(actions) actions.innerHTML = ''
+    const user = authState.user || {}
+    const household = authState.household || {}
+    setAuthStatus(entryCopy().accountMode + ': ' + (user.email || 'account'))
+    const houseEl = document.getElementById('auth-household-name')
+    if(houseEl) houseEl.textContent = household.name || 'My Home'
+    loadInviteCode()
+  }else{
+    if(tools) tools.style.display = 'none'
+    setAuthStatus(entryCopy().guestMode)
+    if(actions){
+      actions.innerHTML = `<button class="small-btn primary" id="settings-open-auth" type="button">${entryEscape(entryCopy().openAuth)}</button>`
+      document.getElementById('settings-open-auth').onclick = () => { entryStep = 'auth'; showEntryGate('auth') }
+    }
+  }
+}
+async function bootstrapEntryGate(){
+  await loadAuthStatus()
+  const user = authState && authState.user ? authState.user : null
+  if(user && (user.language || user.currency)) saveEntryPrefs({language:user.language || entryPrefs.language, currency:user.currency || entryPrefs.currency})
+  renderAuthPanel()
+  if(authState && authState.authenticated){
+    localStorage.setItem(ENTRY_DONE_KEY, '1')
+    localStorage.setItem(ENTRY_MODE_KEY, 'account')
+    hideEntryGate()
+    await loadServerState()
+    return
+  }
+  if(entryDone() && entryMode() === 'guest'){
+    loadLocalStateIntoApp()
+    hideEntryGate()
+    return
+  }
+  showEntryGate('welcome')
 }
 document.getElementById('det-minus3').onclick = () => changeCurrent(-3)
 document.getElementById('det-minus1').onclick = () => changeCurrent(-1)
@@ -3416,8 +3804,8 @@ updateFilterChips()
 scheduleRenderHome()
 loadServerInfo()
 setupAuthPanel()
+bootstrapEntryGate()
 setTimeout(() => migrateExistingThumbnails().catch(() => {}), 1200)
-loadServerState()
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault()
   installPromptEvent = e
