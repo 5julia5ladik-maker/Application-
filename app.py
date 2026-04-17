@@ -88,7 +88,7 @@ IMAGE_WIDTH = int(os.getenv("IMAGE_WIDTH", "720"))
 IMAGE_HEIGHT = int(os.getenv("IMAGE_HEIGHT", "520"))
 POLLINATIONS_TIMEOUT = int(os.getenv("POLLINATIONS_TIMEOUT", "75"))
 IMAGE_CACHE_MAX_ITEMS = int(os.getenv("IMAGE_CACHE_MAX_ITEMS", "80"))
-FORCE_DATA_RESET_VERSION = "2026-04-17-hard-user-cache-reset"
+FORCE_DATA_RESET_VERSION = ""
 
 
 def load_api_key() -> str:
@@ -805,10 +805,7 @@ def startup() -> None:
         marker = DATA_RESET_MARKER_FILE.read_text(encoding="utf-8").strip()
     except OSError:
         marker = ""
-    if (
-        os.getenv("HOMESTOCK_RESET_DATA_ON_START", "").strip() == "1"
-        or (FORCE_DATA_RESET_VERSION and marker != FORCE_DATA_RESET_VERSION)
-    ):
+    if os.getenv("HOMESTOCK_RESET_DATA_ON_START", "").strip() == "1":
         reset_all_homestock_data()
 
 
@@ -832,7 +829,7 @@ def reset_all_homestock_data() -> None:
         except OSError:
             pass
     DATA_DIR.mkdir(parents=True, exist_ok=True)
-    DATA_RESET_MARKER_FILE.write_text(FORCE_DATA_RESET_VERSION or utc_now(), encoding="utf-8")
+    DATA_RESET_MARKER_FILE.write_text(utc_now(), encoding="utf-8")
 
 
 def normalize_email(email: str) -> str:
