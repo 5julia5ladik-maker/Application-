@@ -3952,17 +3952,29 @@ async function bootstrapEntryGate(){
     authState = {authenticated:false}
   }
   await loadAuthStatus()
+  if(googleOauthSuccess && (!authState || !authState.authenticated)){
+    // Mobile browsers can expose the redirect page before the new cookie is visible.
+    for(let attempt = 0; attempt < 3 && (!authState || !authState.authenticated); attempt++){
+      await new Promise(resolve => setTimeout(resolve, 450))
+      await loadAuthStatus()
+    }
+  }
   const user = authState && authState.user ? authState.user : null
   if(user && (user.language || user.currency)) saveEntryPrefs({language:user.language || entryPrefs.language, currency:user.currency || entryPrefs.currency})
   renderAuthPanel()
   if(authState && authState.authenticated){
-    if(!entryFlowSeen()){
+    if(!entryFlowSeen() && !googleOauthSuccess){
       showEntryGate('welcome')
       return
     }
     markEntryFlowDone('account')
     hideEntryGate()
     await loadServerState()
+    return
+  }
+  if(entryDone() && entryMode() === 'account' && entryFlowSeen()){
+    hideEntryGate()
+    loadLocalStateIntoApp()
     return
   }
   if(entryDone() && entryMode() === 'guest' && entryFlowSeen()){
