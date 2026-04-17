@@ -831,6 +831,8 @@ const ENTRY_MODE_KEY = 'hs_entry_mode_v1'
 const ENTRY_DONE_KEY = 'hs_entry_done_v3'
 const ENTRY_VERSION_KEY = 'hs_entry_flow_version_v3'
 const ENTRY_FLOW_VERSION = '2026-04-17-auth-onboarding-v3-hard-reset'
+const CLIENT_RESET_KEY = 'homestock_client_reset_2026_04_17_v3'
+let clientHardResetNeeded = false
 
 function loadJSON(key, fallback){
   try{
@@ -843,6 +845,25 @@ function loadJSON(key, fallback){
 function saveJSON(key, value){
   localStorage.setItem(key, JSON.stringify(value))
 }
+function runClientHardResetOnce(){
+  try{
+    if(localStorage.getItem(CLIENT_RESET_KEY) === '1') return
+    clientHardResetNeeded = true
+    Object.keys(localStorage)
+      .filter(key => key.startsWith('hs_'))
+      .forEach(key => localStorage.removeItem(key))
+    localStorage.setItem(CLIENT_RESET_KEY, '1')
+  }catch(e){}
+  if(window.caches && caches.keys){
+    caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key)))).catch(() => {})
+  }
+  if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+    navigator.serviceWorker.getRegistrations()
+      .then(registrations => Promise.all(registrations.map(reg => reg.unregister())))
+      .catch(() => {})
+  }
+}
+runClientHardResetOnce()
 function cloneStateSnapshot(){
   return {
     items: JSON.parse(JSON.stringify(items || [])),
@@ -3784,6 +3805,10 @@ function renderAuthPanel(){
   }
 }
 async function bootstrapEntryGate(){
+  if(clientHardResetNeeded){
+    try{ await authRequest(AUTH_LOGOUT_URL, {}) }catch(e){}
+    authState = {authenticated:false}
+  }
   await loadAuthStatus()
   const user = authState && authState.user ? authState.user : null
   if(user && (user.language || user.currency)) saveEntryPrefs({language:user.language || entryPrefs.language, currency:user.currency || entryPrefs.currency})
