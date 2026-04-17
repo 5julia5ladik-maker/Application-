@@ -798,6 +798,29 @@ def ensure_database() -> None:
 @app.on_event("startup")
 def startup() -> None:
     init_database()
+    if os.getenv("HOMESTOCK_RESET_DATA_ON_START", "").strip() == "1":
+        reset_all_homestock_data()
+
+
+def reset_all_homestock_data() -> None:
+    """One-deploy maintenance reset for auth, cloud state, and local caches."""
+    with db_connect() as conn:
+        for table in (
+            "sessions",
+            "household_states",
+            "household_members",
+            "households",
+            "users",
+        ):
+            conn.execute(db_sql(f"DELETE FROM {table}"))
+        conn.commit()
+
+    for file_path in (STATE_FILE, IMAGE_CACHE_FILE):
+        try:
+            if file_path.exists():
+                file_path.unlink()
+        except OSError:
+            pass
 
 
 def normalize_email(email: str) -> str:

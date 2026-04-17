@@ -30,7 +30,7 @@ pointer-events:none}
 .screen{position:absolute;inset:0;overflow-y:auto;display:none;padding-bottom:22px}
 .screen.active{display:block}
 .safe-top{padding-top:max(28px, env(safe-area-inset-top, 28px))}
-.scroll-pad{height:90px}
+.scroll-pad{height:calc(116px + env(safe-area-inset-bottom,0px))}
 .home-header{margin:18px 16px 18px;padding:24px 22px 22px;padding-top:max(34px, calc(env(safe-area-inset-top,0px) + 20px));padding-bottom:26px;border-radius:34px;position:relative;overflow:hidden;background:
   radial-gradient(circle at top right, rgba(243,200,159,.92), transparent 34%),
   linear-gradient(145deg, rgba(255,255,255,.95), rgba(247,236,223,.88));
@@ -263,7 +263,7 @@ input[type=file]{display:none}
 .shopping-check:checked::after{content:'✓';display:block;color:#fff;font-size:13px;line-height:18px;text-align:center}
 .checked-item{opacity:.56}
 .checked-item .item-name,.checked-item .item-sub,.checked-item .item-days{text-decoration:line-through}
-.bottom-nav{position:fixed;left:50%;bottom:max(8px, env(safe-area-inset-bottom,8px));transform:translateX(-50%);width:min(100%,430px);padding:12px 12px 10px;background:linear-gradient(180deg, rgba(255,255,255,.86), rgba(244,234,223,.94));backdrop-filter:blur(18px);border-top:1px solid rgba(71,45,18,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:6px;z-index:120}
+.bottom-nav{position:fixed;left:50%;right:auto;bottom:0;transform:translate3d(-50%,0,0);width:min(100vw,430px);padding:12px 12px calc(10px + env(safe-area-inset-bottom,0px));background:linear-gradient(180deg, rgba(255,255,255,.92), rgba(244,234,223,.98));backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-top:1px solid rgba(71,45,18,.08);display:grid;grid-template-columns:repeat(5,1fr);gap:6px;z-index:120;box-shadow:0 -18px 42px rgba(74,44,19,.12);will-change:transform;backface-visibility:hidden;contain:layout paint}
 .nav-btn{border:none;background:transparent;border-radius:18px;padding:10px 8px;font:700 11px 'DM Sans',sans-serif;color:var(--text2);display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
 .nav-btn.active{background:rgba(255,255,255,.72);color:var(--text);box-shadow:var(--shadow-soft)}
 .nav-ico{font-size:18px;line-height:1}
@@ -713,12 +713,7 @@ input[type=file]{display:none}
   <div class="settings-card" id="cloud-auth-card">
     <div class="analytics-label">Cloud account</div>
     <div class="network-main" id="auth-status">Проверяю вход...</div>
-    <div class="auth-grid" id="auth-form">
-      <input class="search-input" id="auth-email" type="email" placeholder="Email">
-      <input class="search-input" id="auth-password" type="password" placeholder="Пароль">
-      <button class="small-btn primary" id="auth-login-btn" type="button">Войти</button>
-      <button class="small-btn secondary" id="auth-register-btn" type="button">Создать аккаунт</button>
-    </div>
+    <div class="settings-preferences" id="settings-preferences"></div>
     <div class="mini-list" id="auth-cloud-tools" style="display:none">
       <div class="mini-item"><span>Дом</span><strong id="auth-household-name">—</strong></div>
       <div class="mini-item"><span>Invite code</span><strong id="auth-invite-code">—</strong></div>
@@ -729,6 +724,7 @@ input[type=file]{display:none}
         <button class="small-btn secondary" id="auth-logout-btn" type="button">Выйти</button>
       </div>
     </div>
+    <div class="settings-auth-actions" id="settings-auth-actions"></div>
   </div>
   <div class="settings-card">
     <div class="analytics-label">Шаблоны</div>
@@ -832,9 +828,9 @@ const ITEMS_KEY = 'hs_items_stable'
 const PHOTOS_KEY = 'hs_item_photos_v1'
 const ENTRY_PREFS_KEY = 'hs_entry_preferences_v1'
 const ENTRY_MODE_KEY = 'hs_entry_mode_v1'
-const ENTRY_DONE_KEY = 'hs_entry_done_v1'
-const ENTRY_VERSION_KEY = 'hs_entry_flow_version'
-const ENTRY_FLOW_VERSION = '2026-04-17-auth-onboarding-v2'
+const ENTRY_DONE_KEY = 'hs_entry_done_v3'
+const ENTRY_VERSION_KEY = 'hs_entry_flow_version_v3'
+const ENTRY_FLOW_VERSION = '2026-04-17-auth-onboarding-v3-hard-reset'
 
 function loadJSON(key, fallback){
   try{
@@ -3387,9 +3383,9 @@ async function loadInviteCode(){
 function renderAuthPanel(){
   const form = document.getElementById('auth-form')
   const tools = document.getElementById('auth-cloud-tools')
-  if(!form || !tools) return
+  if(!tools) return
   if(authState && authState.authenticated){
-    form.style.display = 'none'
+    if(form) form.style.display = 'none'
     tools.style.display = 'block'
     const user = authState.user || {}
     const household = authState.household || {}
@@ -3398,7 +3394,7 @@ function renderAuthPanel(){
     if(houseEl) houseEl.textContent = household.name || 'Мой дом'
     loadInviteCode()
   }else{
-    form.style.display = 'grid'
+    if(form) form.style.display = 'none'
     tools.style.display = 'none'
     setAuthStatus('Войдите, чтобы телефон и ПК видели один общий список.')
   }
